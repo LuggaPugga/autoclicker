@@ -22,8 +22,8 @@ export default {
     provider: 'github',
     owner: 'LuggaPugga',
     repo: 'autoclicker',
-    token: process.env.GITHUB_TOKEN,
-    releaseType: 'prerelease',
+    releaseType: 'draft',
+    channel: 'beta',
   },
 
   asarUnpack: ['resources/**'],

@@ -1,7 +1,7 @@
 import { MousePointerClick, Play, Square } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { ThemeProvider } from './lib/theme-provider'
-import { ThemeToggle } from './components/ui/theme-toggle'
+import { ThemeToggle } from './components/theme-toggle'
 import { SpeedControl } from './components/speed-control'
 import { HotkeyControl } from './components/hotkey-control'
 import { useState, useEffect, useCallback } from 'react'

@@ -15,6 +15,11 @@ jobs:
       run: bun install
     - name: build
       run: bun run build:linux
+    - name: Upload Linux Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: dist/
 
   build_on_mac:
     runs-on: macos-latest
@@ -24,13 +29,18 @@ jobs:
       with:
         bun-version: 1.2.10
     - name: Set up Python 3.9
-      uses: actions/setup-python@v5 
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
     - name: install dependencies
       run: bun install
     - name: build
       run: bun run build:mac
+    - name: Upload macOS Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mac-build
+        path: dist/
 
   build_on_win:
     runs-on: windows-latest
@@ -45,3 +55,8 @@ jobs:
       run: bun install
     - name: build
       run: bun run build:win
+    - name: Upload Windows Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: win-build
+        path: dist/

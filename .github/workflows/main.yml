@@ -35,6 +35,8 @@ jobs:
     - uses: oven-sh/setup-bun@v2
       with:
         bun-version: 1.2.10
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.3
     - name: install dependencies
       run: bun install
     - name: build

@@ -1,5 +1,5 @@
 {
-  "name": "auto-clicker",
+  "name": "autoclicker",
   "version": "1.0.0",
   "type": "module",
   "description": "An Electron based auto clicker",

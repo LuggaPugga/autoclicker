@@ -26,7 +26,7 @@ jobs:
     - name: install dependencies
       run: bun install
     - name: build
-      run: bun run build:win
+      run: bun run build:mac
 
   build_on_win:
     runs-on: windows-latest
@@ -40,4 +40,4 @@ jobs:
     - name: install dependencies
       run: bun install
     - name: build
-      run: bun run build:windows
+      run: bun run build:win

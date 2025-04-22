@@ -33,23 +33,20 @@ export class AutoClicker {
   }
 
   private startAutoClickerLoop(): void {
-    if (this.clickLoopTimeout) clearTimeout(this.clickLoopTimeout)
-
+    if (this.clickLoopTimeout) clearInterval(this.clickLoopTimeout)
+    robot.setMouseDelay(this.clickInterval)
     const autoClickLoop = (): void => {
       if (!this.isAutoClickerRunning) return
-
       this.simulateMouseClick()
-
-      let nextInterval = this.clickInterval
-      if (this.useRandomize) {
-        const variation = this.clickInterval * 0.1
-        nextInterval = this.clickInterval + Math.floor(Math.random() * variation * 2) - variation
-      }
-
-      this.clickLoopTimeout = setTimeout(autoClickLoop, nextInterval)
     }
 
-    autoClickLoop()
+    let interval = this.clickInterval
+    if (this.useRandomize) {
+      const variation = this.clickInterval * 0.1
+      interval = this.clickInterval + Math.floor(Math.random() * variation * 2) - variation
+    }
+
+    this.clickLoopTimeout = setInterval(autoClickLoop, interval)
   }
 
   startAutoClicker(mouseButton: 'left' | 'right'): void {
@@ -63,7 +60,7 @@ export class AutoClicker {
 
   stopAutoClicker(): void {
     if (this.clickLoopTimeout) {
-      clearTimeout(this.clickLoopTimeout)
+      clearInterval(this.clickLoopTimeout)
       this.clickLoopTimeout = null
     }
 

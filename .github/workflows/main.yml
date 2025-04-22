@@ -14,7 +14,7 @@ jobs:
     - name: install dependencies
       run: bun install
     - name: build
-      run: bun run build:linux ${{ github.event_name == 'pull_request' && '--publish never' || '' }}
+      run: bun run build:linux ${{ github.event_name == 'pull_request' && '--publish never' || '--publish always' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Linux Build Artifact
@@ -37,7 +37,7 @@ jobs:
     - name: install dependencies
       run: bun install
     - name: build
-      run: bun run build:mac ${{ github.event_name == 'pull_request' && '--publish never' || '' }}
+      run: bun run build:mac ${{ github.event_name == 'pull_request' && '--publish never' || '--publish always' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload macOS Build Artifact
@@ -58,7 +58,7 @@ jobs:
     - name: install dependencies
       run: bun install
     - name: build
-      run: bun run build:win ${{ github.event_name == 'pull_request' && '--publish never' || '' }}
+      run: bun run build:win ${{ github.event_name == 'pull_request' && '--publish never' || '--publish always' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Windows Build Artifact

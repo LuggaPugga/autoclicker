@@ -15,6 +15,7 @@ function createWindow(): void {
     width: 450,
     height: 620,
     show: false,
+    title: 'AutoClicker',
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {

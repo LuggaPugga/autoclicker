@@ -1,0 +1,19 @@
+{
+  "style": "new-york",
+  "tailwind": {
+    "config": "",
+    "css": "src/renderer/src/assets/base.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "rsc": false,
+  "aliases": {
+    "utils": "@/lib/utils",
+    "components": "@/components",
+    "lib": "@/lib",
+    "hooks": "@/lib/hooks",
+    "ui": "@/components/ui"
+  },
+  "iconLibrary": "lucide"
+}

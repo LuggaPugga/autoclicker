@@ -13,7 +13,9 @@ let isListening: boolean = false
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 450,
-    height: 620,
+    height: process.platform === 'win32' ? 660 : 620,
+    fullscreenable: false,
+    resizable: false,
     show: false,
     title: 'AutoClicker',
     autoHideMenuBar: true,

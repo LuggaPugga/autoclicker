@@ -9,6 +9,8 @@ jobs:
     - uses: oven-sh/setup-bun@v2
       with:
         bun-version: 1.2.10
+    - name: Install Linux dependencies for robotjs
+      run: sudo apt-get install -y libxtst-dev libpng-dev libx11-dev libxkbcommon-dev libxi-dev libxrandr-dev libxinerama-dev build-essential python3
     - name: install dependencies
       run: bun install
     - name: build

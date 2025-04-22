@@ -47,18 +47,10 @@ export default {
     artifactName: '${name}-${version}.${ext}',
   },
 
-  dmg: {
-    artifactName: '${name}-${version}.${ext}',
-  },
-
   linux: {
     target: ['AppImage', 'snap', 'deb'],
     maintainer: 'LuggaPugga',
     category: 'Utility',
-    artifactName: '${name}-${version}.${ext}',
-  },
-
-  appImage: {
     artifactName: '${name}-${version}.${ext}',
   },
 

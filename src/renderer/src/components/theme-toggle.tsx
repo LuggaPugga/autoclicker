@@ -6,12 +6,23 @@ import { cn } from '@/lib/utils'
 export function ThemeToggle({ className }: { className?: string }): React.ReactElement {
   const { theme, setTheme } = useTheme()
 
+  function switchTheme() {
+    if (theme == 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      setTheme(systemTheme === 'dark' ? 'light' : 'dark'	)
+    } else {
+      setTheme(theme === 'dark' ? 'light' : 'dark')
+    }
+  }
+
   return (
     <div className={cn('flex items-center', className)}>
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        onClick={() => switchTheme()}
         className="h-8 w-8 rounded-full"
         aria-label="Toggle theme"
       >

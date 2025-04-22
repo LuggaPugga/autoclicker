@@ -22,4 +22,4 @@ I created this autoclicker because I couldn't find any open-source autoclickers 
 
 - **Windows**
 - **Linux**
-- **Mac**
+- **Mac** (untested)

@@ -34,7 +34,7 @@ export class AutoClicker {
 
   private startAutoClickerLoop(): void {
     if (this.clickLoopTimeout) clearInterval(this.clickLoopTimeout)
-    robot.setMouseDelay(this.clickInterval)
+    robot.setMouseDelay(this.clickInterval / 1.5)
     const autoClickLoop = (): void => {
       if (!this.isAutoClickerRunning) return
       this.simulateMouseClick()

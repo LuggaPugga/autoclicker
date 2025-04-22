@@ -36,7 +36,6 @@
     "@tailwindcss/postcss": "^4.1.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "electron-updater": "^6.6.2",
     "lucide-react": "^0.503.0",
     "postcss": "^8.5.3",
     "tailwind-merge": "^2.6.0",

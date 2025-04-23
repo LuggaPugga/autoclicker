@@ -16,11 +16,6 @@ const STORAGE_KEYS = {
   RIGHT_HOTKEY: 'autoclicker-rightHotkey',
 }
 
-const DEFAULT_HOTKEYS = {
-  left: 'F6',
-  right: 'F7',
-}
-
 export function HotkeyControl({
   className = '',
   onHotkeyChange,
@@ -28,12 +23,12 @@ export function HotkeyControl({
 }: HotkeyControlProps): React.ReactElement {
   const [leftHotkey, setLeftHotkey] = useState<string>(() => {
     const savedHotkey = localStorage.getItem(STORAGE_KEYS.LEFT_HOTKEY)
-    return savedHotkey || DEFAULT_HOTKEYS.left
+    return savedHotkey || 'F6'
   })
 
   const [rightHotkey, setRightHotkey] = useState<string>(() => {
     const savedHotkey = localStorage.getItem(STORAGE_KEYS.RIGHT_HOTKEY)
-    return savedHotkey || DEFAULT_HOTKEYS.right
+    return savedHotkey || 'F7'
   })
 
   const [recording, setRecording] = useState<HotkeyType | null>(null)

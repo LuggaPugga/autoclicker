@@ -1,6 +1,6 @@
 # Autoclicker
 
-![Autoclicker Screenshot](./banner.png)
+![Autoclicker Screenshot](./resources/banner.png)
 
 ## About
 

@@ -5,7 +5,7 @@
       "name": "auto-clicker",
       "dependencies": {
         "@electron-toolkit/preload": "^3.0.2",
-        "@electron-toolkit/utils": "^3.0.0",
+        "@electron-toolkit/utils": "^4.0.0",
         "@jitsi/robotjs": "^0.6.16",
         "@radix-ui/react-alert-dialog": "^1.1.10",
         "@radix-ui/react-label": "^2.1.4",
@@ -104,7 +104,7 @@
 
     "@electron-toolkit/tsconfig": ["@electron-toolkit/tsconfig@1.0.1", "", { "peerDependencies": { "@types/node": "*" } }, "sha512-M0Mol3odspvtCuheyujLNAW7bXq7KFNYVMRtpjFa4ZfES4MuklXBC7Nli/omvc+PRKlrklgAGx3l4VakjNo8jg=="],
 
-    "@electron-toolkit/utils": ["@electron-toolkit/utils@3.0.0", "", { "peerDependencies": { "electron": ">=13.0.0" } }, "sha512-GaXHDhiT7KCvMJjXdp/QqpYinq69T/Pdl49Z1XLf8mKGf63dnsODMWyrmIjEQ0z/vG7dO8qF3fvmI6Eb2lUNZA=="],
+    "@electron-toolkit/utils": ["@electron-toolkit/utils@4.0.0", "", { "peerDependencies": { "electron": ">=13.0.0" } }, "sha512-qXSntwEzluSzKl4z5yFNBknmPGjPa3zFhE4mp9+h0cgokY5ornAeP+CJQDBhKsL1S58aOQfcwkD3NwLZCl+64g=="],
 
     "@electron/asar": ["@electron/asar@3.2.18", "", { "dependencies": { "commander": "^5.0.0", "glob": "^7.1.6", "minimatch": "^3.0.4" }, "bin": { "asar": "bin/asar.js" } }, "sha512-2XyvMe3N3Nrs8cV39IKELRHTYUWFKrmqqSY1U+GMlc0jvqjIVnoxhNd2H4JolWQncbJi1DCvb5TNxZuI2fEjWg=="],
 

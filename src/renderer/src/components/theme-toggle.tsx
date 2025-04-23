@@ -11,7 +11,7 @@ export function ThemeToggle({ className }: { className?: string }): React.ReactE
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light'
-      setTheme(systemTheme === 'dark' ? 'light' : 'dark'	)
+      setTheme(systemTheme === 'dark' ? 'light' : 'dark')
     } else {
       setTheme(theme === 'dark' ? 'light' : 'dark')
     }

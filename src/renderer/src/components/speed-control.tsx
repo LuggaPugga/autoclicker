@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Slider } from './ui/slider'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -15,85 +15,38 @@ const STORAGE_KEYS = {
 }
 
 export function SpeedControl(): React.ReactElement {
-  const [mode, setMode] = useState<SpeedMode>(() => {
-    const savedMode = localStorage.getItem(STORAGE_KEYS.MODE)
-    return (savedMode as SpeedMode) || 'cps'
-  })
+  const [mode, setMode] = useState<SpeedMode>(
+    () => (localStorage.getItem(STORAGE_KEYS.MODE) as SpeedMode) || 'cps'
+  )
 
   const [value, setValue] = useState(() => {
     const savedValue = localStorage.getItem(STORAGE_KEYS.VALUE)
-    if (savedValue) {
-      return parseInt(savedValue)
-    }
-    return mode === 'cps' ? 5 : 200
+    return savedValue ? parseInt(savedValue) : mode === 'cps' ? 5 : 200
   })
 
-  const [randomize, setRandomize] = useState(() => {
-    const savedRandomize = localStorage.getItem(STORAGE_KEYS.RANDOMIZE)
-    return savedRandomize === 'true'
-  })
+  const [randomize, setRandomize] = useState(
+    () => localStorage.getItem(STORAGE_KEYS.RANDOMIZE) === 'true'
+  )
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.MODE, mode)
-  }, [mode])
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.VALUE, value.toString())
-  }, [value])
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.RANDOMIZE, randomize.toString())
-  }, [randomize])
 
-  useEffect(() => {
-    const updateMainProcess = async (): Promise<void> => {
-      const interval = mode === 'cps' ? Math.round(1000 / value) : value
-      await window.api.setClickInterval(interval)
-    }
+    const interval = mode === 'cps' ? Math.round(1000 / value) : value
+    window.api.setClickInterval(interval)
+    window.api.setRandomize(randomize)
+  }, [value, mode, randomize])
 
-    updateMainProcess()
-  }, [value, mode])
+  function handleModeToggle(newMode: SpeedMode): void {
+    if (newMode === mode) return
 
-  useEffect(() => {
-    const updateRandomize = async (): Promise<void> => {
-      await window.api.setRandomize(randomize)
-    }
+    const newValue =
+      newMode === 'cps' ? Math.max(1, Math.round(1000 / value)) : Math.round(1000 / value)
 
-    updateRandomize()
-  }, [randomize])
-
-  const handleModeToggle = useCallback(
-    (newMode: SpeedMode): void => {
-      if (newMode === mode) return
-
-      if (newMode === 'cps') {
-        setValue(Math.max(1, Math.round(1000 / value)))
-      } else {
-        setValue(Math.round(1000 / value))
-      }
-
-      setMode(newMode)
-    },
-    [mode, value]
-  )
-
-  const handleSliderChange = useCallback((newValue: number[]): void => {
-    setValue(newValue[0])
-  }, [])
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>): void => {
-      const numValue = parseInt(e.target.value)
-      if (isNaN(numValue)) return
-
-      if (mode === 'cps') {
-        setValue(Math.max(1, numValue))
-      } else {
-        setValue(Math.max(50, numValue))
-      }
-    },
-    [mode]
-  )
+    setValue(newValue)
+    setMode(newMode)
+  }
 
   const min = mode === 'cps' ? 1 : 50
   const max = mode === 'cps' ? 50 : 1000
@@ -104,7 +57,6 @@ export function SpeedControl(): React.ReactElement {
       <div className="p-4 rounded-lg border border-border/50 bg-card space-y-6">
         <div className="flex justify-center space-x-2">
           <Button
-            type="button"
             variant={mode === 'cps' ? 'default' : 'outline'}
             className="flex-1"
             onClick={() => handleModeToggle('cps')}
@@ -113,7 +65,6 @@ export function SpeedControl(): React.ReactElement {
             Clicks per second
           </Button>
           <Button
-            type="button"
             variant={mode === 'ms' ? 'default' : 'outline'}
             className="flex-1"
             onClick={() => handleModeToggle('ms')}
@@ -141,22 +92,24 @@ export function SpeedControl(): React.ReactElement {
               min={min}
               max={max}
               step={step}
-              onValueChange={handleSliderChange}
+              onValueChange={v => setValue(v[0])}
               className="my-6"
             />
           </div>
 
           <div className="flex items-center gap-2">
-            <Label htmlFor="speed-input" className="sr-only">
-              {mode === 'cps' ? 'Clicks per second' : 'Milliseconds between clicks'}
-            </Label>
             <Input
               id="speed-input"
               type="number"
               value={value}
-              onChange={handleInputChange}
-              min={min}
-              step={step}
+              onChange={e => {
+                const numValue = parseInt(e.target.value)
+                if (!isNaN(numValue) && numValue !== 0) {
+                  setValue(numValue)
+                } else {
+                  setValue(1)
+                }
+              }}
               className="w-24"
             />
             <span className="text-sm text-muted-foreground">

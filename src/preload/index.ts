@@ -10,7 +10,7 @@ const api = {
   registerHotkey: (type: 'left' | 'right', hotkey: string): Promise<boolean> =>
     ipcRenderer.invoke('register-hotkey', type, hotkey),
   onHotkeyActivated: (
-    callback: (state: { leftActive: boolean; rightActive: boolean }) => void
+    callback: (state: { leftActive: boolean; rightActive: boolean }) => void,
   ): (() => void) => {
     const listener = (_: unknown, state: { leftActive: boolean; rightActive: boolean }): void =>
       callback(state)

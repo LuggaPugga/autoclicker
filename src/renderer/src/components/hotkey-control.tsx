@@ -16,19 +16,61 @@ const STORAGE_KEYS = {
   RIGHT_HOTKEY: 'autoclicker-rightHotkey',
 }
 
+interface HotkeyButtonProps {
+  type: HotkeyType
+  hotkey: string
+  isRecording: boolean
+  isActive: boolean
+  isRegistered: boolean
+  isListening: boolean
+  recordingText: string
+  onRecordClick: (type: HotkeyType) => void
+}
+
+function HotkeyButton({
+  type,
+  hotkey,
+  isRecording,
+  isActive,
+  isRegistered,
+  isListening,
+  recordingText,
+  onRecordClick,
+}: HotkeyButtonProps) {
+  const getButtonStyle = (): string => {
+    const baseClasses = 'h-7 min-w-[80px] text-xs transition-colors'
+
+    if (isRecording) {
+      return `${baseClasses} bg-cyan-600 hover:bg-cyan-700`
+    } else if (!isRegistered && hotkey && isListening) {
+      return `${baseClasses} bg-red-200 text-red-800 border-red-300`
+    } else if (isActive) {
+      return `${baseClasses} bg-green-600 hover:bg-green-700 text-white`
+    }
+
+    return baseClasses
+  }
+
+  return (
+    <Button
+      variant={isRecording ? 'default' : isActive ? 'default' : 'outline'}
+      size="sm"
+      onClick={() => onRecordClick(type)}
+      className={getButtonStyle()}
+    >
+      {isRecording ? recordingText : hotkey}
+    </Button>
+  )
+}
+
 export function HotkeyControl({
   className = '',
   onHotkeyChange,
   isListening = false,
 }: HotkeyControlProps): React.ReactElement {
-  const [leftHotkey, setLeftHotkey] = useState<string>(() => {
-    const savedHotkey = localStorage.getItem(STORAGE_KEYS.LEFT_HOTKEY)
-    return savedHotkey || 'F6'
-  })
-
-  const [rightHotkey, setRightHotkey] = useState<string>(() => {
-    const savedHotkey = localStorage.getItem(STORAGE_KEYS.RIGHT_HOTKEY)
-    return savedHotkey || 'F7'
+  const [hotkeys, setHotkeys] = useState({
+    left: localStorage.getItem(STORAGE_KEYS.LEFT_HOTKEY) || 'F6',
+    right: localStorage.getItem(STORAGE_KEYS.RIGHT_HOTKEY) || 'F7',
   })
 
   const [recording, setRecording] = useState<HotkeyType | null>(null)
@@ -38,26 +80,10 @@ export function HotkeyControl({
   })
   const [currentModifiers, setCurrentModifiers] = useState<string[]>([])
   const [currentKey, setCurrentKey] = useState<string>('')
-
   const [activeHotkeys, setActiveHotkeys] = useState<Record<HotkeyType, boolean>>({
     left: false,
     right: false,
   })
-
-  useEffect(() => {
-    const removeListener = window.api.onHotkeyActivated(
-      (state: { leftActive: boolean; rightActive: boolean }) => {
-        setActiveHotkeys({
-          left: state.leftActive,
-          right: state.rightActive,
-        })
-      },
-    )
-
-    return () => {
-      removeListener()
-    }
-  }, [])
 
   const registerGlobalHotkey = useCallback(
     async (type: HotkeyType, hotkey: string): Promise<void> => {
@@ -81,16 +107,25 @@ export function HotkeyControl({
   )
 
   useEffect(() => {
-    if (leftHotkey) {
-      registerGlobalHotkey('left', leftHotkey)
-    }
-  }, [leftHotkey, registerGlobalHotkey])
+    const removeListener = window.api.onHotkeyActivated(
+      (state: { leftActive: boolean; rightActive: boolean }) => {
+        setActiveHotkeys({
+          left: state.leftActive,
+          right: state.rightActive,
+        })
+      },
+    )
+
+    return () => removeListener()
+  }, [])
 
   useEffect(() => {
-    if (rightHotkey) {
-      registerGlobalHotkey('right', rightHotkey)
-    }
-  }, [rightHotkey, registerGlobalHotkey])
+    registerGlobalHotkey('left', hotkeys.left)
+  }, [hotkeys.left, registerGlobalHotkey])
+
+  useEffect(() => {
+    registerGlobalHotkey('right', hotkeys.right)
+  }, [hotkeys.right, registerGlobalHotkey])
 
   const handleStartRecording = useCallback((type: HotkeyType): void => {
     setRecording(type)
@@ -110,22 +145,15 @@ export function HotkeyControl({
         return
       }
 
-      // Track modifier keys
-      if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
         setCurrentModifiers((prev) => {
           const modifier = e.key === 'Control' ? 'Ctrl' : e.key
-          if (!prev.includes(modifier)) {
-            return [...prev, modifier]
-          }
-          return prev
+          return prev.includes(modifier) ? prev : [...prev, modifier]
         })
         return
       }
 
-      // For non-modifier keys, store as the main key
-      let keyName = e.key
-      if (e.key === ' ') keyName = 'Space'
-      setCurrentKey(keyName)
+      setCurrentKey(e.key === ' ' ? 'Space' : e.key)
     },
     [recording],
   )
@@ -134,37 +162,23 @@ export function HotkeyControl({
     (e: KeyboardEvent): void => {
       if (!recording) return
 
-      // If a non-modifier key is released, finalize the hotkey
-      if (
-        e.key !== 'Control' &&
-        e.key !== 'Alt' &&
-        e.key !== 'Shift' &&
-        e.key !== 'Meta' &&
-        e.key !== 'Escape' &&
-        e.key !== ' ' &&
-        currentKey
-      ) {
-        // Create the final hotkey combination
-        const modifiers = [...currentModifiers]
-        const fullKey = [...modifiers, currentKey].join('+')
+      if (!['Control', 'Alt', 'Shift', 'Meta', 'Escape', ' '].includes(e.key) && currentKey) {
+        const fullKey = [...currentModifiers, currentKey].join('+')
 
-        if (recording === 'left') {
-          setLeftHotkey(fullKey)
-        } else {
-          setRightHotkey(fullKey)
-        }
+        setHotkeys((prev) => ({
+          ...prev,
+          [recording]: fullKey,
+        }))
 
         setRecording(null)
         setCurrentModifiers([])
         setCurrentKey('')
       }
 
-      // Remove released modifier from the current modifiers
-      if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
-        setCurrentModifiers((prev) => {
-          const modifier = e.key === 'Control' ? 'Ctrl' : e.key
-          return prev.filter((m) => m !== modifier)
-        })
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+        setCurrentModifiers((prev) =>
+          prev.filter((m) => m !== (e.key === 'Control' ? 'Ctrl' : e.key)),
+        )
       }
     },
     [recording, currentModifiers, currentKey],
@@ -176,30 +190,11 @@ export function HotkeyControl({
       window.addEventListener('keyup', handleKeyUp)
     }
 
-    return (): void => {
+    return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
   }, [recording, handleKeyDown, handleKeyUp])
-
-  const getButtonStyle = (type: HotkeyType): string => {
-    const isRecording = recording === type
-    const isActive = activeHotkeys[type]
-    const isRegistered = registrationStatus[type]
-    const hotkey = type === 'left' ? leftHotkey : rightHotkey
-
-    const baseClasses = 'h-7 min-w-[80px] text-xs transition-colors'
-
-    if (isRecording) {
-      return `${baseClasses} bg-cyan-600 hover:bg-cyan-700`
-    } else if (!isRegistered && hotkey && isListening) {
-      return `${baseClasses} bg-red-200 text-red-800 border-red-300`
-    } else if (isActive) {
-      return `${baseClasses} bg-green-600 hover:bg-green-700 text-white`
-    }
-
-    return baseClasses
-  }
 
   const getRecordingText = (): string => {
     if (!recording) return ''
@@ -238,18 +233,16 @@ export function HotkeyControl({
             <Label className="text-xs font-medium text-muted-foreground">Left click</Label>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant={
-                recording === 'left' ? 'default' : activeHotkeys.left ? 'default' : 'outline'
-              }
-              size="sm"
-              onClick={() => handleStartRecording('left')}
-              className={getButtonStyle('left')}
-            >
-              {recording === 'left' ? getRecordingText() : leftHotkey}
-            </Button>
-          </div>
+          <HotkeyButton
+            type="left"
+            hotkey={hotkeys.left}
+            isRecording={recording === 'left'}
+            isActive={activeHotkeys.left}
+            isRegistered={registrationStatus.left}
+            isListening={isListening}
+            recordingText={getRecordingText()}
+            onRecordClick={handleStartRecording}
+          />
         </div>
 
         {/* Right Click Hotkey */}
@@ -263,18 +256,16 @@ export function HotkeyControl({
             <Label className="text-xs font-medium text-muted-foreground">Right click</Label>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant={
-                recording === 'right' ? 'default' : activeHotkeys.right ? 'default' : 'outline'
-              }
-              size="sm"
-              onClick={() => handleStartRecording('right')}
-              className={getButtonStyle('right')}
-            >
-              {recording === 'right' ? getRecordingText() : rightHotkey}
-            </Button>
-          </div>
+          <HotkeyButton
+            type="right"
+            hotkey={hotkeys.right}
+            isRecording={recording === 'right'}
+            isActive={activeHotkeys.right}
+            isRegistered={registrationStatus.right}
+            isListening={isListening}
+            recordingText={getRecordingText()}
+            onRecordClick={handleStartRecording}
+          />
         </div>
       </div>
 

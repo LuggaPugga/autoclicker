@@ -16,7 +16,7 @@
     "dev": "electron-vite dev",
     "build": "bun run typecheck && electron-vite build",
     "rebuild": "electron-rebuild",
-    "postinstall": "bun x electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
     "build:unpack": "bun run build && electron-builder --dir",
     "build:win": "bun run build && electron-builder --win portable",
     "build:mac": "bun run build && electron-builder --mac",

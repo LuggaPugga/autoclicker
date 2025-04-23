@@ -18,7 +18,7 @@
     "rebuild": "electron-rebuild",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "bun run build && electron-builder --dir",
-    "build:win": "bun run build && electron-builder --win portable",
+    "build:win": "bun run build && electron-builder --win",
     "build:mac": "bun run build && electron-builder --mac",
     "build:linux": "bun run build && electron-builder --linux"
   },

@@ -4,7 +4,7 @@ import { ThemeProvider } from './lib/theme-provider'
 import { ThemeToggle } from './components/theme-toggle'
 import { SpeedControl } from './components/speed-control'
 import { HotkeyControl } from './components/hotkey-control'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
 const STORAGE_KEYS = {
   LEFT_HOTKEY: 'autoclicker-leftHotkey',
@@ -14,55 +14,16 @@ const STORAGE_KEYS = {
 function App(): React.ReactElement {
   const [isRunning, setIsRunning] = useState(false)
 
-  const [leftHotkey, setLeftHotkey] = useState(() => {
-    const savedHotkey = localStorage.getItem(STORAGE_KEYS.LEFT_HOTKEY)
-    return savedHotkey || 'F6'
-  })
-
-  const [rightHotkey, setRightHotkey] = useState(() => {
-    const savedHotkey = localStorage.getItem(STORAGE_KEYS.RIGHT_HOTKEY)
-    return savedHotkey || 'F7'
-  })
-
   const toggleAutoClicker = useCallback(async (): Promise<void> => {
     const newState = !isRunning
     setIsRunning(newState)
     await window.api.toggleAutoClicker(newState)
   }, [isRunning])
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent): void => {
-      let pressedKey = e.key
-      if (e.key === ' ') pressedKey = 'Space'
-      if (e.key === 'Control') pressedKey = 'Ctrl'
-      if (e.key === 'Meta') pressedKey = 'Meta'
-
-      const modifiers: string[] = []
-      if (e.ctrlKey && e.key !== 'Control') modifiers.push('Ctrl')
-      if (e.altKey && e.key !== 'Alt') modifiers.push('Alt')
-      if (e.shiftKey && e.key !== 'Shift') modifiers.push('Shift')
-      if (e.metaKey && e.key !== 'Meta') modifiers.push('Meta')
-
-      const fullKey = [...modifiers, pressedKey].join('+')
-
-      if (fullKey === leftHotkey || e.key === leftHotkey) {
-        toggleAutoClicker()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isRunning, leftHotkey, rightHotkey, toggleAutoClicker])
-
   const handleHotkeyChange = useCallback((type: 'left' | 'right', hotkey: string): void => {
     if (type === 'left') {
-      setLeftHotkey(hotkey)
       localStorage.setItem(STORAGE_KEYS.LEFT_HOTKEY, hotkey)
     } else {
-      setRightHotkey(hotkey)
       localStorage.setItem(STORAGE_KEYS.RIGHT_HOTKEY, hotkey)
     }
   }, [])

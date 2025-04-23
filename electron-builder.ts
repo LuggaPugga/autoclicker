@@ -48,7 +48,7 @@ export default {
   },
 
   linux: {
-    target: ['AppImage', 'snap', 'deb'],
+    target: ['AppImage', 'deb' /*, 'snap' */],
     maintainer: 'LuggaPugga',
     category: 'Utility',
     artifactName: '${name}-${version}.${ext}',

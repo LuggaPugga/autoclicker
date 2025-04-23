@@ -1,11 +1,9 @@
 {
   "style": "new-york",
   "tailwind": {
-    "config": "",
     "css": "src/renderer/src/assets/base.css",
     "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
+    "cssVariables": true
   },
   "rsc": false,
   "aliases": {

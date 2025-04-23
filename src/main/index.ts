@@ -39,7 +39,7 @@ function createWindow(): void {
     if (mainWindow) mainWindow.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler(details => {
+  mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
@@ -106,14 +106,16 @@ function registerGlobalShortcut(accelerator: string, mouseButton: 'left' | 'righ
       globalShortcut.unregister(existingShortcut)
     }
 
+    const normalizedAccelerator = normalizeAccelerator(accelerator)
+
     if (mouseButton === 'left') {
-      leftClickShortcut = accelerator
+      leftClickShortcut = normalizedAccelerator
     } else {
-      rightClickShortcut = accelerator
+      rightClickShortcut = normalizedAccelerator
     }
 
     if (isListening) {
-      return globalShortcut.register(accelerator, () => {
+      return globalShortcut.register(normalizedAccelerator, () => {
         if (!autoClicker) return
 
         if (autoClicker.getCurrentButton() === mouseButton && autoClicker.isRunning()) {
@@ -129,6 +131,33 @@ function registerGlobalShortcut(accelerator: string, mouseButton: 'left' | 'righ
     console.error(`Failed to register ${mouseButton} click shortcut:`, error)
     return false
   }
+}
+
+function normalizeAccelerator(accelerator: string): string {
+  let normalized = accelerator.replace('Ctrl+', 'CommandOrControl+')
+
+  const parts = normalized.split('+')
+  const modifiers: string[] = []
+  let key = ''
+
+  parts.forEach((part) => {
+    if (['CommandOrControl', 'Alt', 'Shift', 'Meta'].includes(part)) {
+      modifiers.push(part)
+    } else {
+      key = part
+    }
+  })
+
+  const sortOrder: Record<string, number> = {
+    CommandOrControl: 1,
+    Alt: 2,
+    Shift: 3,
+    Meta: 4,
+  }
+
+  modifiers.sort((a, b) => sortOrder[a] - sortOrder[b])
+
+  return [...modifiers, key].join('+')
 }
 
 // IPC handlers

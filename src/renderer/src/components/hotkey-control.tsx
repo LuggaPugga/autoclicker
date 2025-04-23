@@ -41,6 +41,8 @@ export function HotkeyControl({
     left: false,
     right: false,
   })
+  const [currentModifiers, setCurrentModifiers] = useState<string[]>([])
+  const [currentKey, setCurrentKey] = useState<string>('')
 
   const [activeHotkeys, setActiveHotkeys] = useState<Record<HotkeyType, boolean>>({
     left: false,
@@ -54,7 +56,7 @@ export function HotkeyControl({
           left: state.leftActive,
           right: state.rightActive,
         })
-      }
+      },
     )
 
     return () => {
@@ -66,10 +68,10 @@ export function HotkeyControl({
     async (type: HotkeyType, hotkey: string): Promise<void> => {
       try {
         const success = await window.api.registerHotkey(type, hotkey)
-        setRegistrationStatus(prev => ({ ...prev, [type]: success }))
+        setRegistrationStatus((prev) => ({ ...prev, [type]: success }))
         localStorage.setItem(
           type === 'left' ? STORAGE_KEYS.LEFT_HOTKEY : STORAGE_KEYS.RIGHT_HOTKEY,
-          hotkey
+          hotkey,
         )
 
         if (onHotkeyChange) {
@@ -77,10 +79,10 @@ export function HotkeyControl({
         }
       } catch (error) {
         console.error(`Failed to register ${type} hotkey:`, error)
-        setRegistrationStatus(prev => ({ ...prev, [type]: false }))
+        setRegistrationStatus((prev) => ({ ...prev, [type]: false }))
       }
     },
-    [onHotkeyChange]
+    [onHotkeyChange],
   )
 
   useEffect(() => {
@@ -97,60 +99,59 @@ export function HotkeyControl({
 
   const handleStartRecording = useCallback((type: HotkeyType): void => {
     setRecording(type)
+    setCurrentModifiers([])
+    setCurrentKey('')
   }, [])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent): void => {
       if (!recording) return
-
       e.preventDefault()
 
-      let keyName = e.key
-
-      if (e.key === ' ') keyName = 'Space'
-      if (e.key === 'Control') keyName = 'Ctrl'
-      if (e.key === 'Meta') keyName = 'Meta'
       if (e.key === 'Escape') {
         setRecording(null)
+        setCurrentModifiers([])
+        setCurrentKey('')
         return
       }
 
-      const modifiers: string[] = []
-      if (e.ctrlKey && e.key !== 'Control') modifiers.push('Ctrl')
-      if (e.altKey && e.key !== 'Alt') modifiers.push('Alt')
-      if (e.shiftKey && e.key !== 'Shift') modifiers.push('Shift')
-      if (e.metaKey && e.key !== 'Meta') modifiers.push('Meta')
-
-      const fullKey = [...modifiers, keyName].join('+')
-
-      if (recording === 'left') {
-        setLeftHotkey(fullKey)
-      } else {
-        setRightHotkey(fullKey)
+      // Track modifier keys
+      if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
+        setCurrentModifiers((prev) => {
+          const modifier = e.key === 'Control' ? 'Ctrl' : e.key
+          if (!prev.includes(modifier)) {
+            return [...prev, modifier]
+          }
+          return prev
+        })
+        return
       }
 
-      setRecording(null)
+      // For non-modifier keys, store as the main key
+      let keyName = e.key
+      if (e.key === ' ') keyName = 'Space'
+      setCurrentKey(keyName)
     },
-    [recording]
+    [recording],
   )
 
-  const handleMouseDown = useCallback(
-    (e: MouseEvent): void => {
+  const handleKeyUp = useCallback(
+    (e: KeyboardEvent): void => {
       if (!recording) return
 
-      e.preventDefault()
-
-      if (e.button >= 0 && e.button <= 4) {
-        const buttonNames = ['Mouse1', 'Mouse3', 'Mouse2', 'Mouse4', 'Mouse5']
-        const buttonName = buttonNames[e.button]
-
-        const modifiers: string[] = []
-        if (e.ctrlKey) modifiers.push('Ctrl')
-        if (e.altKey) modifiers.push('Alt')
-        if (e.shiftKey) modifiers.push('Shift')
-        if (e.metaKey) modifiers.push('Meta')
-
-        const fullKey = [...modifiers, buttonName].join('+')
+      // If a non-modifier key is released, finalize the hotkey
+      if (
+        e.key !== 'Control' &&
+        e.key !== 'Alt' &&
+        e.key !== 'Shift' &&
+        e.key !== 'Meta' &&
+        e.key !== 'Escape' &&
+        e.key !== ' ' &&
+        currentKey
+      ) {
+        // Create the final hotkey combination
+        const modifiers = [...currentModifiers]
+        const fullKey = [...modifiers, currentKey].join('+')
 
         if (recording === 'left') {
           setLeftHotkey(fullKey)
@@ -159,22 +160,32 @@ export function HotkeyControl({
         }
 
         setRecording(null)
+        setCurrentModifiers([])
+        setCurrentKey('')
+      }
+
+      // Remove released modifier from the current modifiers
+      if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
+        setCurrentModifiers((prev) => {
+          const modifier = e.key === 'Control' ? 'Ctrl' : e.key
+          return prev.filter((m) => m !== modifier)
+        })
       }
     },
-    [recording]
+    [recording, currentModifiers, currentKey],
   )
 
   useEffect(() => {
     if (recording) {
       window.addEventListener('keydown', handleKeyDown)
-      window.addEventListener('mousedown', handleMouseDown)
+      window.addEventListener('keyup', handleKeyUp)
     }
 
     return (): void => {
       window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [recording, handleKeyDown, handleMouseDown])
+  }, [recording, handleKeyDown, handleKeyUp])
 
   const getButtonStyle = (type: HotkeyType): string => {
     const isRecording = recording === type
@@ -193,6 +204,18 @@ export function HotkeyControl({
     }
 
     return baseClasses
+  }
+
+  const getRecordingText = (): string => {
+    if (!recording) return ''
+
+    if (currentModifiers.length === 0 && !currentKey) {
+      return 'Press key...'
+    }
+
+    const parts = [...currentModifiers]
+    if (currentKey) parts.push(currentKey)
+    return parts.join('+')
   }
 
   return (
@@ -229,7 +252,7 @@ export function HotkeyControl({
               onClick={() => handleStartRecording('left')}
               className={getButtonStyle('left')}
             >
-              {recording === 'left' ? 'Press key...' : leftHotkey}
+              {recording === 'left' ? getRecordingText() : leftHotkey}
             </Button>
           </div>
         </div>
@@ -254,14 +277,14 @@ export function HotkeyControl({
               onClick={() => handleStartRecording('right')}
               className={getButtonStyle('right')}
             >
-              {recording === 'right' ? 'Press key...' : rightHotkey}
+              {recording === 'right' ? getRecordingText() : rightHotkey}
             </Button>
           </div>
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Press a key or mouse button. ESC to cancel. Hotkeys work globally.
+        Press a key. ESC to cancel. Hotkeys work globally.
       </p>
     </div>
   )

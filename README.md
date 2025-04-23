@@ -1,4 +1,4 @@
-# Autoclicker
+# AutoClicker
 
 ![Autoclicker Screenshot](./resources/banner.png)
 

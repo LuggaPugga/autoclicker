@@ -39,7 +39,7 @@
         "eslint": "^9.25.1",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^5.2.0",
-        "node-abi": "4.6.0",
+        "node-abi": "4.8.0",
         "node-gyp": "^11.2.0",
         "prettier": "^3.5.3",
         "react": "^19.1.0",
@@ -1115,7 +1115,7 @@
 
     "negotiator": ["negotiator@1.0.0", "", {}, "sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg=="],
 
-    "node-abi": ["node-abi@4.6.0", "", { "dependencies": { "semver": "^7.6.3" } }, "sha512-AActsRaxKmWuE/0u28/1u4PlvEcY/mh83HC0j+p3/4nQHgcHTgGR8tkDeDiyVboR+4J6YVl+er/C7NmQBhMP6A=="],
+    "node-abi": ["node-abi@4.8.0", "", { "dependencies": { "semver": "^7.6.3" } }, "sha512-+P1Mf1XNURT+wN9UK8cjtHSwmmG02iAsX0JaYDDdXgMUe5eybde3AKpGGxOrkDmPkuonYJ6WjIRrNVQe0kjmFg=="],
 
     "node-addon-api": ["node-addon-api@8.3.1", "", {}, "sha512-lytcDEdxKjGJPTLEfW4mYMigRezMlyJY8W4wxJK8zE533Jlb8L8dRuObJFWg2P+AuOIxoCgKF+2Oq4d4Zd0OUA=="],
 

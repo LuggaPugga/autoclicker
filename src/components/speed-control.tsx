@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Timer, Zap, Shuffle } from "lucide-react"
-import { useAutoclickerStore } from "@/lib/autoclickerStore"
+import { useAutoclickerStore } from "@/lib/autoclicker-store"
 
 type SpeedMode = "cps" | "ms"
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react"
 import { Button } from "./ui/button"
 import { Label } from "./ui/label"
 import { MousePointer } from "lucide-react"
-import { useTempStore } from "@/lib/tempStore"
-import { useAutoclickerStore } from "@/lib/autoclickerStore"
+import { useTempStore } from "@/lib/temp-store"
+import { useAutoclickerStore } from "@/lib/autoclicker-store"
 
 type HotkeyType = "left" | "right"
 
@@ -30,7 +30,7 @@ function HotkeyButton({
   isActive,
   isRegistered,
   isListening,
-  recordingText,  
+  recordingText,
   onRecordClick,
 }: HotkeyButtonProps) {
   const getButtonStyle = (): string => {

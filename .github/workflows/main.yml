@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
+      - name: setup bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest

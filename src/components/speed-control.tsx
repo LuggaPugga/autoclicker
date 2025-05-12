@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Timer, Zap, Shuffle } from "lucide-react"
-import { useAutoclickerStore } from "@/lib/store"
+import { useAutoclickerStore } from "@/lib/autoclickerStore"
 
 type SpeedMode = "cps" | "ms"
 
@@ -72,7 +72,7 @@ export function SpeedControl(): React.ReactElement {
               step={step}
               onValueChange={(v) => {
                 const ms = toMilliseconds(v[0])
-                setClickSpeed(ms)
+                setClickSpeed(mode === "cps" ? ms : toMilliseconds(ms))
               }}
               className="my-6"
             />

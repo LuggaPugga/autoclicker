@@ -108,7 +108,7 @@ export function HotkeyControl({
 
       setCurrentKey(e.key === " " ? "Space" : e.key)
     },
-    [recording]
+    [recording],
   )
 
   const handleKeyUp = useCallback(
@@ -131,11 +131,11 @@ export function HotkeyControl({
 
       if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
         setCurrentModifiers((prev) =>
-          prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key))
+          prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key)),
         )
       }
     },
-    [recording, currentModifiers, currentKey]
+    [recording, currentModifiers, currentKey],
   )
 
   useEffect(() => {

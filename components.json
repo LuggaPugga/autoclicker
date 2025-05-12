@@ -1,0 +1,17 @@
+{
+  "style": "new-york",
+  "tailwind": {
+    "css": "src/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "rsc": false,
+  "aliases": {
+    "utils": "@/lib/utils",
+    "components": "@/components",
+    "lib": "@/lib",
+    "hooks": "@/lib/hooks",
+    "ui": "@/components/ui"
+  },
+  "iconLibrary": "lucide"
+}

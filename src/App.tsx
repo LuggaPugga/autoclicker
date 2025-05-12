@@ -4,10 +4,10 @@ import { MousePointerClick, Square, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "./components/ui/button"
 import { SpeedControl } from "./components/speed-control"
-import { useAutoclickerStore } from "@/lib/store"
+import { useTempStore } from "@/lib/tempStore"
 import { HotkeyControl } from "./components/hotkey-control"
 function App() {
-  const { isRunning, toggleIsRunning } = useAutoclickerStore()
+  const { isRunning, toggleIsRunning } = useTempStore()
 
   return (
     <ThemeProvider>

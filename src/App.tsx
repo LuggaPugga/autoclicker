@@ -1,12 +1,13 @@
-import { useState } from "react"
 import "./globals.css"
 import { ThemeProvider } from "@/lib/theme-provider"
 import { MousePointerClick, Square, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "./components/ui/button"
-
+import { SpeedControl } from "./components/speed-control"
+import { useAutoclickerStore } from "@/lib/store"
+import { HotkeyControl } from "./components/hotkey-control"
 function App() {
-  const [isRunning, setIsRunning] = useState(false)
+  const { isRunning, toggleIsRunning } = useAutoclickerStore()
 
   return (
     <ThemeProvider>
@@ -33,10 +34,15 @@ function App() {
           </div>
         </header>
 
+        <main className="flex p-4 flex-col gap-4">
+          <SpeedControl />
+          <HotkeyControl />
+        </main>
+
         <div className="p-4 flex flex-1 items-end">
           <Button
             className={`w-full ${isRunning ? "bg-red-600 hover:bg-red-700" : ""}`}
-            onClick={() => setIsRunning(!isRunning)}
+            onClick={toggleIsRunning}
           >
             {isRunning ? (
               <>

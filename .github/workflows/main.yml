@@ -56,8 +56,27 @@ jobs:
           args: ${{ matrix.args }}
         id: tauri
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
         with:
-          name: ${{ matrix.platform }}-build-artifacts
-          path: src-tauri/target/release/bundle/
+          name: binaries-linux
+          path: |
+            ${{ github.workspace }}/src-tauri/target/**/*.deb
+            ${{ github.workspace }}/src-tauri/target/**/*.rpm
+            ${{ github.workspace }}/src-tauri/target/**/*.AppImage
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: binaries-macos
+          path: |
+            ${{ github.workspace }}/src-tauri/target/**/*.dmg
+            ${{ github.workspace }}/src-tauri/target/**/*.app
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: binaries-windows
+          path: |
+            ${{ github.workspace }}/src-tauri/target/**/*.exe
+            ${{ github.workspace }}/src-tauri/target/**/*.msi

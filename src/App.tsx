@@ -1,51 +1,39 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useState } from "react"
+import "./globals.css"
+import { ThemeProvider } from "@/lib/theme-provider"
+import { MousePointerClick } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const [isRunning, setIsRunning] = useState(false)
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <ThemeProvider>
+      <div className="flex flex-col h-screen bg-background">
+        <header className="border-b border-border/50 px-4 py-3">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MousePointerClick className="h-5 w-5 text-cyan-400" />
+              <h1 className="font-semibold text-foreground">AutoClicker</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    isRunning ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                  }`}
+                ></div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {isRunning ? "Running" : "Not Running"}
+                </span>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </header>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+    </ThemeProvider>
+  )
 }
 
-export default App;
+export default App

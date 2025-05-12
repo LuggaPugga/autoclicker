@@ -1,8 +1,9 @@
 import { useState } from "react"
 import "./globals.css"
 import { ThemeProvider } from "@/lib/theme-provider"
-import { MousePointerClick } from "lucide-react"
+import { MousePointerClick, Square, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "./components/ui/button"
 
 function App() {
   const [isRunning, setIsRunning] = useState(false)
@@ -31,6 +32,25 @@ function App() {
             </div>
           </div>
         </header>
+
+        <div className="p-4 flex flex-1 items-end">
+          <Button
+            className={`w-full ${isRunning ? "bg-red-600 hover:bg-red-700" : ""}`}
+            onClick={() => setIsRunning(!isRunning)}
+          >
+            {isRunning ? (
+              <>
+                <Square className="h-4 w-4 mr-2" />
+                Stop Listening for Hotkey
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Start Listening for Hotkey
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </ThemeProvider>
   )

@@ -60,4 +60,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-build-artifacts
-          path: src-tauri/target/release/bundle/
+          if-no-files-found: ignore
+          path: |
+            ${{ toJson(steps.tauri.outputs.artifactPaths[0]) }}
+            ${{ toJson(steps.tauri.outputs.artifactPaths[1]) }}
+            ${{ toJson(steps.tauri.outputs.artifactPaths[2]) }}
+            ${{ toJson(steps.tauri.outputs.artifactPaths[3]) }}
+            ${{ toJson(steps.tauri.outputs.artifactPaths[4]) }}
+            ${{ toJson(steps.tauri.outputs.artifactPaths[5]) }}

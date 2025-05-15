@@ -1,5 +1,8 @@
 # AutoClicker
 
+> [!IMPORTANT]
+> This branch is deprecated. Only the Tauri version of the autoclicker is currently under active development.
+
 ![Autoclicker Screenshot](./resources/banner.png)
 
 ## About

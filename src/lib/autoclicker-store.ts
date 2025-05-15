@@ -30,6 +30,7 @@ export const createAutoclickerStore = () =>
 export const useAutoclickerStore = createAutoclickerStore()
 export const tauriHandler = createTauriStore("autoclicker", useAutoclickerStore, {
   syncStrategy: "immediate",
+  saveStrategy: "debounce"
 })
 ;(async () => {
   await tauriHandler.start()

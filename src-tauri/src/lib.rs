@@ -1,4 +1,4 @@
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 use device_query::{DeviceQuery, DeviceState, Keycode};
 use std::thread;
 use std::time::Duration;
@@ -38,9 +38,6 @@ fn was_mouse_button_just_pressed(current_buttons: &Vec<bool>, previous_buttons: 
 
 struct HotkeyManager {
     app_handle: tauri::AppHandle,
-    device_state: DeviceState,
-    previous_keys: Arc<Mutex<Vec<Keycode>>>,
-    previous_mouse_buttons: Arc<Mutex<Vec<bool>>>,
     is_running: Arc<Mutex<bool>>,
     hotkey_left: Arc<Mutex<String>>,
     hotkey_right: Arc<Mutex<String>>,
@@ -49,10 +46,6 @@ struct HotkeyManager {
 
 impl HotkeyManager {
     fn new(app_handle: tauri::AppHandle) -> Self {
-        let device_state = DeviceState::new();
-        let previous_keys = Arc::new(Mutex::new(device_state.get_keys()));
-        let previous_mouse_buttons = Arc::new(Mutex::new(device_state.get_mouse().button_pressed));
-
         let initial_is_running = app_handle.zustand().try_get::<bool>(store::TEMP, temp_keys::IS_RUNNING).unwrap_or(false);
         let initial_hotkey_left = app_handle.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT).unwrap_or_default();
         let initial_hotkey_right = app_handle.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT).unwrap_or_default();
@@ -89,9 +82,6 @@ impl HotkeyManager {
 
         Self {
             app_handle,
-            device_state,
-            previous_keys,
-            previous_mouse_buttons,
             is_running,
             hotkey_left,
             hotkey_right,
@@ -149,23 +139,26 @@ impl HotkeyManager {
         }
     }
 
-    fn handle_toggle_mode(&self, current_keys: &Vec<Keycode>, current_mouse_buttons: &Vec<bool>) {
-        let mut previous_keys_guard = self.previous_keys.lock().unwrap();
-        let mut previous_mouse_buttons_guard = self.previous_mouse_buttons.lock().unwrap();
-
-        if *current_keys != *previous_keys_guard || *current_mouse_buttons != *previous_mouse_buttons_guard {
+    fn handle_toggle_mode(
+        &self,
+        current_keys: &Vec<Keycode>,
+        current_mouse_buttons: &Vec<bool>,
+        previous_keys: &mut Vec<Keycode>,
+        previous_mouse_buttons: &mut Vec<bool>
+    ) {
+        if current_keys != previous_keys || current_mouse_buttons != previous_mouse_buttons {
             let hotkey_left_str = self.hotkey_left.lock().unwrap().clone();
             let hotkey_right_str = self.hotkey_right.lock().unwrap().clone();
 
             if !hotkey_left_str.is_empty() {
                 let mut triggered = false;
                 if get_mouse_button_index(&hotkey_left_str).is_some() {
-                    if was_mouse_button_just_pressed(&current_mouse_buttons, &previous_mouse_buttons_guard, &hotkey_left_str) {
+                    if was_mouse_button_just_pressed(current_mouse_buttons, previous_mouse_buttons, &hotkey_left_str) {
                         triggered = true;
                     }
                 } else {
                     if hotkey_utils::check_hotkey(&current_keys, &hotkey_left_str) &&
-                       !hotkey_utils::check_hotkey(&previous_keys_guard, &hotkey_left_str) {
+                       !hotkey_utils::check_hotkey(previous_keys, &hotkey_left_str) {
                         triggered = true;
                     }
                 }
@@ -178,12 +171,12 @@ impl HotkeyManager {
             if !hotkey_right_str.is_empty() {
                 let mut triggered = false;
                 if get_mouse_button_index(&hotkey_right_str).is_some() {
-                    if was_mouse_button_just_pressed(&current_mouse_buttons, &previous_mouse_buttons_guard, &hotkey_right_str) {
+                    if was_mouse_button_just_pressed(current_mouse_buttons, previous_mouse_buttons, &hotkey_right_str) {
                         triggered = true;
                     }
                 } else {
                     if hotkey_utils::check_hotkey(&current_keys, &hotkey_right_str) &&
-                       !hotkey_utils::check_hotkey(&previous_keys_guard, &hotkey_right_str) {
+                       !hotkey_utils::check_hotkey(previous_keys, &hotkey_right_str) {
                         triggered = true;
                     }
                 }
@@ -192,8 +185,8 @@ impl HotkeyManager {
                     self.update_hotkey_state(temp_keys::HOTKEY_RIGHT_ACTIVE, !current_right_active, "right-hotkey-activated", "toggle");
                 }
             }
-            *previous_keys_guard = current_keys.clone();
-            *previous_mouse_buttons_guard = current_mouse_buttons.clone();
+            *previous_keys = current_keys.clone();
+            *previous_mouse_buttons = current_mouse_buttons.clone();
         }
     }
     
@@ -207,18 +200,22 @@ impl HotkeyManager {
     }
 
     fn process_hotkeys_loop(&self) {
+        let device_state = DeviceState::new();
+        let mut previous_keys = device_state.get_keys(); 
+        let mut previous_mouse_buttons = device_state.get_mouse().button_pressed;
+
         loop {
             let is_running_val = *self.is_running.lock().unwrap();
 
             if is_running_val {
-                let current_keys = self.device_state.get_keys();
-                let current_mouse_buttons = self.device_state.get_mouse().button_pressed;
+                let current_keys = device_state.get_keys();
+                let current_mouse_buttons = device_state.get_mouse().button_pressed;
                 let hold_mode_val = *self.hold_mode.lock().unwrap();
 
                 if hold_mode_val {
                     self.handle_hold_mode(&current_keys, &current_mouse_buttons);
                 } else {
-                    self.handle_toggle_mode(&current_keys, &current_mouse_buttons);
+                    self.handle_toggle_mode(&current_keys, &current_mouse_buttons, &mut previous_keys, &mut previous_mouse_buttons);
                 }
                 thread::sleep(Duration::from_millis(50));
             } else {

@@ -10,7 +10,7 @@ import { useAutoclickerStore } from "@/lib/autoclicker-store"
 type SpeedMode = "cps" | "ms"
 
 export function SpeedControl(): React.ReactElement {
-  const { clickSpeed, setClickSpeed, randomize, toggleRandomize } = useAutoclickerStore()
+  const { clickSpeed, setClickSpeed, holdMode, toggleHoldMode } = useAutoclickerStore()
   const [mode, setMode] = useState<SpeedMode>("cps")
 
   function getDisplayValue() {
@@ -104,16 +104,14 @@ export function SpeedControl(): React.ReactElement {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shuffle className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="randomize-switch" className="text-sm font-medium">
-              Randomize timing
+            <Label htmlFor="hold-mode-switch" className="text-sm font-medium">
+              Hold to Click Mode
             </Label>
           </div>
 
-          <Switch id="randomize-switch" checked={randomize} onCheckedChange={toggleRandomize} />
+          <Switch id="hold-mode-switch" checked={holdMode} onCheckedChange={toggleHoldMode} />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Add slight random variations to timing to avoid detection
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">When enabled, clicking only occurs while holding down the hotkey</p>
       </div>
     </div>
   )

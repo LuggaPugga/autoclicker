@@ -191,11 +191,9 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
             Ok(())
           });
 
-          let settings = Settings {
-            linux_delay: 0,
-            ..Default::default()
-        };
-        let mut enigo = Enigo::new(&settings).unwrap();
+        let mut enigo = Enigo::new(&Settings::default()).unwrap();
+
+        #[cfg(target_os = "linux")]
         enigo.set_delay(0);
 
         loop {

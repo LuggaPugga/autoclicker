@@ -111,7 +111,9 @@ export function SpeedControl(): React.ReactElement {
 
           <Switch id="hold-mode-switch" checked={holdMode} onCheckedChange={toggleHoldMode} />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">When enabled, clicking only occurs while holding down the hotkey</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          When enabled, clicking only occurs while holding down the hotkey
+        </p>
       </div>
     </div>
   )

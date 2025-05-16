@@ -2,6 +2,9 @@
 
 ![Autoclicker Screenshot](.github/banner.png)
 
+> [!NOTE]
+> Mouse button hotkeys are currently only supported on Windows. Keyboard hotkeys work on all platforms.
+
 ## About
 
 I created this autoclicker because I couldn't find any open-source autoclickers that had all the features I wanted. This project is designed to be simple, powerful, and cross-platform, with a modern UI and essential features.

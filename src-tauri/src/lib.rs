@@ -14,8 +14,8 @@ use crate::zustand_keys::{autoclicker_keys, store, temp_keys};
 // Helper function to parse "MouseButtonX" and check press state
 fn is_mouse_button_pressed(mouse_buttons: &Vec<bool>, hotkey_str: &str) -> bool {
     match hotkey_str {
-        "MouseButton4" => mouse_buttons.get(3).cloned().unwrap_or(false), // Index 3 for Button 4
-        "MouseButton5" => mouse_buttons.get(4).cloned().unwrap_or(false), // Index 4 for Button 5
+        "MouseButton4" => mouse_buttons.get(4).cloned().unwrap_or(false), // Index 4 for Button 4
+        "MouseButton5" => mouse_buttons.get(5).cloned().unwrap_or(false), // Index 5 for Button 5
         _ => false,
     }
 }
@@ -23,8 +23,8 @@ fn is_mouse_button_pressed(mouse_buttons: &Vec<bool>, hotkey_str: &str) -> bool 
 // Helper function for toggle mode to check if a mouse button was just pressed
 fn was_mouse_button_just_pressed(current_buttons: &Vec<bool>, previous_buttons: &Vec<bool>, hotkey_str: &str) -> bool {
     let button_index = match hotkey_str {
-        "MouseButton4" => Some(3),
-        "MouseButton5" => Some(4),
+        "MouseButton4" => Some(4),
+        "MouseButton5" => Some(5),
         _ => None,
     };
 

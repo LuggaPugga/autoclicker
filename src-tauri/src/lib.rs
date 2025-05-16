@@ -191,7 +191,12 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
             Ok(())
           });
 
-        let mut enigo = Enigo::new(&Settings::default()).unwrap();
+          let settings = Settings {
+            linux_delay: 0,
+            ..Default::default()
+        };
+        let mut enigo = Enigo::new(&settings).unwrap();
+        enigo.set_delay(0);
 
         loop {
             let speed_ms = *speed_ms_arc.lock().unwrap();

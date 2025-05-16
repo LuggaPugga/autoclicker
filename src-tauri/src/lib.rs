@@ -200,7 +200,7 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
 
         loop {
             let speed_ms = *speed_ms_arc.lock().unwrap();
-            let sleep_duration = Duration::from_millis(speed_ms.max(1.0) as u64);
+            let sleep_duration = Duration::from_micros((speed_ms * 1000.0) as u64);
 
             let is_running = *is_running_arc.lock().unwrap();
             let left_active = *left_active_arc.lock().unwrap();

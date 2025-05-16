@@ -7,6 +7,9 @@ use tauri_plugin_zustand::ManagerExt;
 use std::sync::{Arc, Mutex};
 
 mod hotkey_utils;
+mod zustand_keys;
+
+use crate::zustand_keys::{autoclicker_keys, store, temp_keys};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,17 +22,19 @@ pub fn run() {
                 let device_state = DeviceState::new();
                 let mut previous_keys = device_state.get_keys();
 
-                let initial_is_running = app_handle_hotkey.zustand().try_get::<bool>("temp", "isRunning").unwrap_or(false);
-                let initial_hotkey_left = app_handle_hotkey.zustand().try_get::<String>("autoclicker", "hotkeyLeft").unwrap_or_default();
-                let initial_hotkey_right = app_handle_hotkey.zustand().try_get::<String>("autoclicker", "hotkeyRight").unwrap_or_default();
+                let initial_is_running = app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::IS_RUNNING).unwrap_or(false);
+                let initial_hotkey_left = app_handle_hotkey.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT).unwrap_or_default();
+                let initial_hotkey_right = app_handle_hotkey.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT).unwrap_or_default();
+                let initial_hold_mode = app_handle_hotkey.zustand().try_get::<bool>(store::AUTOCLICKER, autoclicker_keys::HOLD_MODE).unwrap_or(false);
 
                 let is_running_arc = Arc::new(Mutex::new(initial_is_running));
                 let hotkey_left_arc = Arc::new(Mutex::new(initial_hotkey_left));
                 let hotkey_right_arc = Arc::new(Mutex::new(initial_hotkey_right));
+                let hold_mode_arc = Arc::new(Mutex::new(initial_hold_mode));
 
                 let is_running_watch_clone = Arc::clone(&is_running_arc);
-                let _ = app_handle_hotkey.zustand().watch("temp", move |app| {
-                    if let Ok(new_val) = app.zustand().try_get::<bool>("temp", "isRunning") {
+                let _ = app_handle_hotkey.zustand().watch(store::TEMP, move |app| {
+                    if let Ok(new_val) = app.zustand().try_get::<bool>(store::TEMP, temp_keys::IS_RUNNING) {
                         *is_running_watch_clone.lock().unwrap() = new_val;
                     }
                     Ok(())
@@ -37,12 +42,16 @@ pub fn run() {
 
                 let hotkey_left_watch_clone = Arc::clone(&hotkey_left_arc);
                 let hotkey_right_watch_clone = Arc::clone(&hotkey_right_arc);
-                let _ = app_handle_hotkey.zustand().watch("autoclicker", move |app| {
-                    if let Ok(new_val) = app.zustand().try_get::<String>("autoclicker", "hotkeyLeft") {
+                let hold_mode_watch_clone = Arc::clone(&hold_mode_arc);
+                let _ = app_handle_hotkey.zustand().watch(store::AUTOCLICKER, move |app| {
+                    if let Ok(new_val) = app.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT) {
                         *hotkey_left_watch_clone.lock().unwrap() = new_val;
                     }
-                    if let Ok(new_val) = app.zustand().try_get::<String>("autoclicker", "hotkeyRight") {
+                    if let Ok(new_val) = app.zustand().try_get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT) {
                         *hotkey_right_watch_clone.lock().unwrap() = new_val;
+                    }
+                    if let Ok(new_val) = app.zustand().try_get::<bool>(store::AUTOCLICKER, autoclicker_keys::HOLD_MODE) {
+                        *hold_mode_watch_clone.lock().unwrap() = new_val;
                     }
                     Ok(())
                 });
@@ -52,33 +61,82 @@ pub fn run() {
 
                     if is_running {
                         let current_keys = device_state.get_keys();
+                        let hotkey_left_str = hotkey_left_arc.lock().unwrap().clone();
+                        let hotkey_right_str = hotkey_right_arc.lock().unwrap().clone();
+                        let hold_mode = *hold_mode_arc.lock().unwrap();
 
-                        if current_keys != previous_keys {
-                            let hotkey_left = hotkey_left_arc.lock().unwrap().clone();
-                            let hotkey_right = hotkey_right_arc.lock().unwrap().clone();
+                        if hold_mode {
+                            let left_hotkey_is_pressed = hotkey_utils::check_hotkey(&current_keys, &hotkey_left_str);
+                            let current_left_active_in_zustand = app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE).unwrap_or(false);
 
-                            if hotkey_utils::check_hotkey(&current_keys, &hotkey_left) {
-                                let current_left_active = app_handle_hotkey.zustand().try_get::<bool>("temp", "hotkeyLeftActive").unwrap_or(false);
-                                let new_left_active = !current_left_active;
-                                if let Err(e) = app_handle_hotkey.zustand().set("temp", "hotkeyLeftActive", new_left_active) {
-                                    eprintln!("Failed to set leftActive in Zustand store: {}", e);
+                            if left_hotkey_is_pressed != current_left_active_in_zustand {
+                                if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE, left_hotkey_is_pressed) {
+                                    eprintln!("Failed to set leftActive (hold) in Zustand store: {}", e);
                                 }
-                                app_handle_hotkey.emit("left-hotkey-activated", new_left_active).unwrap();
-                            }
-                            if hotkey_utils::check_hotkey(&current_keys, &hotkey_right) {
-                                let current_right_active = app_handle_hotkey.zustand().try_get::<bool>("temp", "hotkeyRightActive").unwrap_or(false);
-                                let new_right_active = !current_right_active;
-                                if let Err(e) = app_handle_hotkey.zustand().set("temp", "hotkeyRightActive", new_right_active) {
-                                    eprintln!("Failed to set rightActive in Zustand store: {}", e);
-                                }
-                                app_handle_hotkey.emit("right-hotkey-activated", new_right_active).unwrap();
+                                app_handle_hotkey.emit("left-hotkey-activated", left_hotkey_is_pressed).unwrap_or_else(|e| {
+                                    eprintln!("Failed to emit left-hotkey-activated (hold): {}", e);
+                                });
                             }
 
-                            previous_keys = current_keys;
+                            let right_hotkey_is_pressed = hotkey_utils::check_hotkey(&current_keys, &hotkey_right_str);
+                            let current_right_active_in_zustand = app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE).unwrap_or(false);
+
+                            if right_hotkey_is_pressed != current_right_active_in_zustand {
+                                if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE, right_hotkey_is_pressed) {
+                                    eprintln!("Failed to set rightActive (hold) in Zustand store: {}", e);
+                                }
+                                app_handle_hotkey.emit("right-hotkey-activated", right_hotkey_is_pressed).unwrap_or_else(|e| {
+                                    eprintln!("Failed to emit right-hotkey-activated (hold): {}", e);
+                                });
+                            }
+                        } else {
+                            if current_keys != previous_keys {
+                                if !hotkey_left_str.is_empty() && hotkey_utils::check_hotkey(&current_keys, &hotkey_left_str) {
+                                    let current_left_active = app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE).unwrap_or(false);
+                                    let new_left_active = !current_left_active;
+                                    if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE, new_left_active) {
+                                        eprintln!("Failed to set leftActive (toggle) in Zustand store: {}", e);
+                                    }
+                                    app_handle_hotkey.emit("left-hotkey-activated", new_left_active).unwrap_or_else(|e| {
+                                        eprintln!("Failed to emit left-hotkey-activated (toggle): {}", e);
+                                    });
+                                }
+                                if !hotkey_right_str.is_empty() && hotkey_utils::check_hotkey(&current_keys, &hotkey_right_str) {
+                                    let current_right_active = app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE).unwrap_or(false);
+                                    let new_right_active = !current_right_active;
+                                    if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE, new_right_active) {
+                                        eprintln!("Failed to set rightActive (toggle) in Zustand store: {}", e);
+                                    }
+                                    app_handle_hotkey.emit("right-hotkey-activated", new_right_active).unwrap_or_else(|e| {
+                                        eprintln!("Failed to emit right-hotkey-activated (toggle): {}", e);
+                                    });
+                                }
+                                previous_keys = current_keys;
+                            }
                         }
-
                         thread::sleep(Duration::from_millis(50));
                     } else {
+                        let hold_mode = *hold_mode_arc.lock().unwrap();
+                        if hold_mode {
+                            if app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE).unwrap_or(false) {
+                                if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE, false) {
+                                    eprintln!("Failed to reset leftActive (is_running false, hold mode): {}", e);
+                                } else {
+                                    app_handle_hotkey.emit("left-hotkey-activated", false).unwrap_or_else(|e| {
+                                        eprintln!("Failed to emit reset left-hotkey-activated (is_running false, hold mode): {}", e);
+                                    });
+                                }
+                            }
+                            if app_handle_hotkey.zustand().try_get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE).unwrap_or(false) {
+                                 if let Err(e) = app_handle_hotkey.zustand().set(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE, false) {
+                                    eprintln!("Failed to reset rightActive (is_running false, hold mode): {}", e);
+                                } else {
+                                    app_handle_hotkey.emit("right-hotkey-activated", false).unwrap_or_else(|e| {
+                                        eprintln!("Failed to emit reset right-hotkey-activated (is_running false, hold mode): {}", e);
+                                    });
+                                }
+                            }
+                        }
                         thread::sleep(Duration::from_millis(200));
                     }
                 }
@@ -95,20 +153,20 @@ pub fn run() {
                 let left_active_clone = Arc::clone(&left_active_arc);
                 let right_active_clone = Arc::clone(&right_active_arc);
 
-                let _ = app_handle_clicker.zustand().watch("temp", move |app| {
+                let _ = app_handle_clicker.zustand().watch(store::TEMP, move |app| {
                     let new_is_running = app
                       .zustand()
-                      .try_get::<bool>("temp", "isRunning")
+                      .try_get::<bool>(store::TEMP, temp_keys::IS_RUNNING)
                       .unwrap_or(false);
 
                     let new_left_active = app
                       .zustand()
-                      .try_get::<bool>("temp", "hotkeyLeftActive")
+                      .try_get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE)
                       .unwrap_or(false);
                       
                     let new_right_active = app
                       .zustand()
-                      .try_get::<bool>("temp", "hotkeyRightActive")
+                      .try_get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE)
                       .unwrap_or(false);
                     
                     let mut is_running_lock = is_running_clone.lock().unwrap();
@@ -123,13 +181,13 @@ pub fn run() {
                     Ok(())
                   });
                 
-                let speed_ms_arc = Arc::new(Mutex::new(app_handle_clicker.zustand().try_get::<f64>("autoclicker", "clickSpeed").unwrap_or(100.0)));
+                let speed_ms_arc = Arc::new(Mutex::new(app_handle_clicker.zustand().try_get::<f64>(store::AUTOCLICKER, autoclicker_keys::CLICK_SPEED).unwrap_or(100.0)));
                 let speed_ms_clone = Arc::clone(&speed_ms_arc);
 
-                let _ = app_handle_clicker.zustand().watch("autoclicker", move |app| {
+                let _ = app_handle_clicker.zustand().watch(store::AUTOCLICKER, move |app| {
                     let new_speed_ms = app
                       .zustand()
-                      .try_get::<f64>("autoclicker", "clickSpeed")
+                      .try_get::<f64>(store::AUTOCLICKER, autoclicker_keys::CLICK_SPEED)
                       .unwrap_or(100.0);
 
                     let mut speed_ms_lock = speed_ms_clone.lock().unwrap();

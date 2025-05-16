@@ -199,32 +199,39 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
         enigo.set_delay(0);
 
         loop {
-            let speed_ms = *speed_ms_arc.lock().unwrap();
+            let (speed_ms, is_running, left_active, right_active) = {
+                let speed = *speed_ms_arc.lock().expect("Failed to lock speed mutex");
+                let running = *is_running_arc.lock().expect("Failed to lock running mutex"); 
+                let left = *left_active_arc.lock().expect("Failed to lock left active mutex");
+                let right = *right_active_arc.lock().expect("Failed to lock right active mutex");
+                (speed, running, left, right)
+            };
+
             let sleep_duration = Duration::from_micros((speed_ms * 1000.0) as u64);
 
-            let is_running = *is_running_arc.lock().unwrap();
-            let left_active = *left_active_arc.lock().unwrap();
-            let right_active = *right_active_arc.lock().unwrap();
-
-            if is_running {
-                if left_active {
-                    if let Err(e) = enigo.button(Button::Left, Click) {
-                        eprintln!("Failed to perform left click: {}", e);
-                    }
-                }
-                if right_active {
-                    if let Err(e) = enigo.button(Button::Right, Click) {
-                        eprintln!("Failed to perform right click: {}", e);
-                    }
-                }
-                if left_active || right_active {
-                    thread::sleep(sleep_duration);
-                } else {
-                    thread::sleep(Duration::from_millis(50));
-                }
-            } else {
+            if !is_running {
                 thread::sleep(Duration::from_millis(200));
+                continue;
             }
+
+            if left_active {
+                if let Err(e) = enigo.button(Button::Left, Click) {
+                    eprintln!("Failed to perform left click: {}", e);
+                }
+            }
+
+            if right_active {
+                if let Err(e) = enigo.button(Button::Right, Click) {
+                    eprintln!("Failed to perform right click: {}", e);
+                }
+            }
+
+            let sleep_time = if left_active || right_active {
+                sleep_duration
+            } else {
+                Duration::from_millis(50)
+            };
+            thread::sleep(sleep_time);
         }
     });
 }

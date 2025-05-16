@@ -81,72 +81,109 @@ export function HotkeyControl({
     setCurrentKey("")
   }, [])
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent): void => {
+  const handleInputDown = useCallback(
+    (e: KeyboardEvent | MouseEvent): void => {
       if (!recording) return
       e.preventDefault()
 
-      if (e.key === "Escape") {
-        setRecording(null)
-        setCurrentModifiers([])
-        setCurrentKey("")
-        return
-      }
+      if (e instanceof KeyboardEvent) {
+        if (e.key === "Escape") {
+          setRecording(null)
+          setCurrentModifiers([])
+          setCurrentKey("")
+          return
+        }
 
-      if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
-        setCurrentModifiers((prev) => {
-          const modifier = e.key === "Control" ? "Ctrl" : e.key
-          return prev.includes(modifier) ? prev : [...prev, modifier]
-        })
-        return
-      }
+        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
+          setCurrentModifiers((prev) => {
+            const modifier = e.key === "Control" ? "Ctrl" : e.key
+            return prev.includes(modifier) ? prev : [...prev, modifier]
+          })
+          return
+        }
 
-      setCurrentKey(e.key === " " ? "Space" : e.key)
+        setCurrentKey(e.key === " " ? "Space" : e.key)
+      } else if (e instanceof MouseEvent) {
+        if (e.button > 2) {
+          setCurrentKey(`MouseButton${e.button + 1}`)
+        }
+      }
     },
     [recording],
   )
 
-  const handleKeyUp = useCallback(
-    (e: KeyboardEvent): void => {
+  const handleInputUp = useCallback(
+    (e: KeyboardEvent | MouseEvent): void => {
       if (!recording) return
 
-      if (!["Control", "Alt", "Shift", "Meta", "Escape", " "].includes(e.key) && currentKey) {
-        const fullKey = [...currentModifiers, currentKey].join("+")
+      if (e instanceof KeyboardEvent) {
+        if (!["Control", "Alt", "Shift", "Meta", "Escape", " "].includes(e.key) && currentKey) {
+          const fullKey = [...currentModifiers, currentKey].join("+")
 
-        if (recording === "left") {
-          setHotkeyLeft(fullKey)
-        } else if (recording === "right") {
-          setHotkeyRight(fullKey)
+          if (recording === "left") {
+            setHotkeyLeft(fullKey)
+          } else if (recording === "right") {
+            setHotkeyRight(fullKey)
+          }
+
+          setRecording(null)
+          setCurrentModifiers([])
+          setCurrentKey("")
         }
 
-        setRecording(null)
-        setCurrentModifiers([])
-        setCurrentKey("")
-      }
+        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
+          setCurrentModifiers((prev) =>
+            prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key)),
+          )
+        }
+      } else if (e instanceof MouseEvent) {
+        e.preventDefault()
+        if (currentKey && e.button > 2) {
+          const fullKey = currentKey
 
-      if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
-        setCurrentModifiers((prev) =>
-          prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key)),
-        )
+          if (recording === "left") {
+            setHotkeyLeft(fullKey)
+          } else if (recording === "right") {
+            setHotkeyRight(fullKey)
+          }
+
+          setRecording(null)
+          setCurrentModifiers([])
+          setCurrentKey("")
+        }
       }
     },
-    [recording, currentModifiers, currentKey],
+    [recording, currentModifiers, currentKey, setHotkeyLeft, setHotkeyRight],
   )
 
   useEffect(() => {
     if (recording) {
-      window.addEventListener("keydown", handleKeyDown)
-      window.addEventListener("keyup", handleKeyUp)
+      window.addEventListener("keydown", handleInputDown as EventListener)
+      window.addEventListener("keyup", handleInputUp as EventListener)
+      window.addEventListener("mousedown", handleInputDown as EventListener)
+      window.addEventListener("mouseup", handleInputUp as EventListener)
+      window.addEventListener("contextmenu", (e) => e.preventDefault())
     }
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("keyup", handleKeyUp)
+      window.removeEventListener("keydown", handleInputDown as EventListener)
+      window.removeEventListener("keyup", handleInputUp as EventListener)
+      window.removeEventListener("mousedown", handleInputDown as EventListener)
+      window.removeEventListener("mouseup", handleInputUp as EventListener)
+      window.removeEventListener("contextmenu", (e) => e.preventDefault())
     }
-  }, [recording, handleKeyDown, handleKeyUp])
+  }, [recording, handleInputDown, handleInputUp])
 
   const getRecordingText = (): string => {
     if (!recording) return ""
+
+    if (currentKey.startsWith("MouseButton")) {
+      if (currentKey === "MouseButton4") return "Browser Back"
+      if (currentKey === "MouseButton5") return "Browser Forward"
+
+      const buttonNumber = currentKey.replace("MouseButton", "")
+      return `Mouse Button ${buttonNumber}`
+    }
 
     if (currentModifiers.length === 0 && !currentKey) {
       return "Press key..."

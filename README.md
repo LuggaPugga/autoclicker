@@ -15,7 +15,7 @@ I created this autoclicker because I couldn't find any open-source autoclickers 
 
 - **Tauri** – Cross-platform desktop app framework
 - **Enigo** – Rust library for input simulation
-- **Device_Query** – Detecting input events 
+- **Device_Query** – Detecting input events
 - **Shadcn** – UI components
 - **Tailwind CSS** – Utility-first CSS framework
 

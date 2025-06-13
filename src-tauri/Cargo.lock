@@ -3845,9 +3845,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-zustand"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "964b72a6afbf4ac6a8472cb1157c6855821901901e0e3a86fb5f4cbb8526e0c5"
+checksum = "509841ef959362644a77d449f9a58fcd794d8785b9a04f7991f3cf5b246f613b"
 dependencies = [
  "serde",
  "tauri",
@@ -3906,9 +3906,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-store"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e12b93f701deb715c3b509d61b8400550c58e2d2e6dd5c1b73e4e100a4eb5ba3"
+checksum = "f7981255eefa2868d49af173f27f0171e6e4a3c580530334f31a7be8b25446c8"
 dependencies = [
  "dashmap",
  "futures",
@@ -3924,9 +3924,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-store-macros"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "936c68b67d8126f923eff0354eb978630a527c2fc4ab413d306995ebacd11cdb"
+checksum = "fef3bf6f34307c6185436ea109c6fd6c01bfb9636c16902cd7e8abcc243fbecc"
 dependencies = [
  "proc-macro2",
  "quote",

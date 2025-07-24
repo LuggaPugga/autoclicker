@@ -14,7 +14,9 @@
       {
         "title": "autoclicker",
         "width": 450,
-        "height": 620
+        "height": 620,
+        "maximizable": false,
+        "resizable": false
       }
     ],
     "security": {

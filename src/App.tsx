@@ -1,11 +1,12 @@
 import "./globals.css"
-import { ThemeProvider } from "@/lib/theme-provider"
-import { MousePointerClick, Square, Play } from "lucide-react"
+import { MousePointerClick, Play, Square } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Button } from "./components/ui/button"
-import { SpeedControl } from "./components/speed-control"
 import { useTempStore } from "@/lib/temp-store"
+import { ThemeProvider } from "@/lib/theme-provider"
 import { HotkeyControl } from "./components/hotkey-control"
+import { SpeedControl } from "./components/speed-control"
+import { Button } from "./components/ui/button"
+
 function App() {
   const { isRunning, toggleIsRunning } = useTempStore()
 

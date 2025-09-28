@@ -1,5 +1,5 @@
-import { create } from "zustand"
 import { createTauriStore } from "@tauri-store/zustand"
+import { create } from "zustand"
 
 interface AutoclickerState {
   clickSpeed: number

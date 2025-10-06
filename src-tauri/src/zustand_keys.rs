@@ -14,4 +14,4 @@ pub mod autoclicker_keys {
     pub const HOTKEY_RIGHT: &str = "hotkeyRight";
     pub const HOLD_MODE: &str = "holdMode";
     pub const CLICK_SPEED: &str = "clickSpeed";
-} 
+}

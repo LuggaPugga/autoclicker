@@ -56,7 +56,7 @@ jobs:
           args: ${{ matrix.args }}
         id: tauri
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform == 'ubuntu-22.04'
         with:
           name: binaries-linux
@@ -65,7 +65,7 @@ jobs:
             ${{ github.workspace }}/src-tauri/target/**/*.rpm
             ${{ github.workspace }}/src-tauri/target/**/*.AppImage
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform == 'macos-latest' && contains(matrix.args, 'aarch64-apple-darwin')
         with:
           name: binaries-macos-aarch64
@@ -73,7 +73,7 @@ jobs:
             ${{ github.workspace }}/src-tauri/target/**/*.dmg
             ${{ github.workspace }}/src-tauri/target/**/*.app
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform == 'macos-latest' && contains(matrix.args, 'x86_64-apple-darwin')
         with:
           name: binaries-macos-x86_64
@@ -81,7 +81,7 @@ jobs:
             ${{ github.workspace }}/src-tauri/target/**/*.dmg
             ${{ github.workspace }}/src-tauri/target/**/*.app
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform == 'windows-latest'
         with:
           name: binaries-windows

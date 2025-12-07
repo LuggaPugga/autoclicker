@@ -1,28 +1,65 @@
-import { createTauriStore } from "@tauri-store/zustand"
-import { create } from "zustand"
+import { createSignal, onCleanup } from "solid-js"
+import { Store } from "tauri-store"
 
-interface TempStoreState {
+interface TempState {
   isRunning: boolean
   hotkeyLeftActive: boolean
   hotkeyRightActive: boolean
-  toggleIsRunning: () => void
-  [key: string]: any
+  [key: string]: unknown
 }
 
-export const createTempStore = () =>
-  create<TempStoreState>((set) => ({
-    isRunning: false,
-    hotkeyLeftActive: false,
-    hotkeyRightActive: false,
-    toggleIsRunning: () => set((state) => ({ isRunning: !state.isRunning })),
-  }))
-
-export const useTempStore = createTempStore()
-export const tauriHandler = createTauriStore("temp", useTempStore, {
-  syncStrategy: "immediate",
-  saveOnChange: false,
-  saveOnExit: false,
+const store = new Store<TempState>("temp", {
+  isRunning: false,
+  hotkeyLeftActive: false,
+  hotkeyRightActive: false,
 })
-;(async () => {
-  await tauriHandler.start()
-})()
+
+const initialState: TempState = {
+  isRunning: false,
+  hotkeyLeftActive: false,
+  hotkeyRightActive: false,
+}
+
+const [state, setState] = createSignal<TempState>(initialState)
+
+store.start().then(() => {
+  const currentState = {
+    isRunning: (store.get("isRunning") as boolean) ?? false,
+    hotkeyLeftActive: (store.get("hotkeyLeftActive") as boolean) ?? false,
+    hotkeyRightActive: (store.get("hotkeyRightActive") as boolean) ?? false,
+  }
+  setState(currentState)
+})
+
+const unsubscribe = store.subscribe(() => {
+  const currentState = {
+    isRunning: (store.get("isRunning") as boolean) ?? false,
+    hotkeyLeftActive: (store.get("hotkeyLeftActive") as boolean) ?? false,
+    hotkeyRightActive: (store.get("hotkeyRightActive") as boolean) ?? false,
+  }
+  setState(currentState)
+})
+
+onCleanup(() => {
+  unsubscribe()
+})
+
+export function useTempStore() {
+  const currentState = state
+
+  return {
+    get isRunning() {
+      return currentState().isRunning
+    },
+    get hotkeyLeftActive() {
+      return currentState().hotkeyLeftActive
+    },
+    get hotkeyRightActive() {
+      return currentState().hotkeyRightActive
+    },
+    toggleIsRunning: () => {
+      const current = store.get("isRunning")
+      store.set("isRunning", !current)
+    },
+  }
+}

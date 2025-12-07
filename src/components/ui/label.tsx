@@ -1,17 +1,18 @@
-import * as React from "react"
-import * as LabelPrimitive from "@radix-ui/react-label"
+/** biome-ignore-all lint/a11y/noLabelWithoutControl: <Just a component> */
+import type { Component, ComponentProps } from "solid-js"
+import { splitProps } from "solid-js"
 
 import { cn } from "@/lib/utils"
 
-function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+const Label: Component<ComponentProps<"label">> = (props) => {
+  const [local, others] = splitProps(props, ["class"])
   return (
-    <LabelPrimitive.Root
-      data-slot="label"
-      className={cn(
-        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        className,
+    <label
+      class={cn(
+        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        local.class,
       )}
-      {...props}
+      {...others}
     />
   )
 }

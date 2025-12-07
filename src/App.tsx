@@ -1,5 +1,5 @@
 import "./globals.css"
-import { MousePointerClick, Play, Square } from "lucide-react"
+import { MousePointerClick, Play, Square } from "lucide-solid"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useTempStore } from "@/lib/temp-store"
 import { ThemeProvider } from "@/lib/theme-provider"
@@ -8,26 +8,26 @@ import { SpeedControl } from "./components/speed-control"
 import { Button } from "./components/ui/button"
 
 function App() {
-  const { isRunning, toggleIsRunning } = useTempStore()
+  const tempStore = useTempStore()
 
   return (
     <ThemeProvider>
-      <div className="flex flex-col h-screen bg-background">
-        <header className="border-b border-border/50 px-4 py-3">
-          <div className="container mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MousePointerClick className="h-5 w-5 text-cyan-400" />
-              <h1 className="font-semibold text-foreground">AutoClicker</h1>
+      <div class="flex flex-col h-screen bg-background">
+        <header class="border-b border-border/50 px-4 py-3">
+          <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <MousePointerClick class="h-5 w-5 text-cyan-400" />
+              <h1 class="font-semibold text-foreground">AutoClicker</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
                 <div
-                  className={`h-2 w-2 rounded-full ${
-                    isRunning ? "bg-green-400 animate-pulse" : "bg-gray-400"
+                  class={`h-2 w-2 rounded-full ${
+                    tempStore.isRunning ? "bg-green-400 animate-pulse" : "bg-gray-400"
                   }`}
                 ></div>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {isRunning ? "Running" : "Not Running"}
+                <span class="text-xs font-medium text-muted-foreground">
+                  {tempStore.isRunning ? "Running" : "Not Running"}
                 </span>
               </div>
               <ThemeToggle />
@@ -35,24 +35,24 @@ function App() {
           </div>
         </header>
 
-        <main className="flex p-4 flex-col gap-4">
+        <main class="flex p-4 flex-col gap-4">
           <SpeedControl />
-          <HotkeyControl />
+          <HotkeyControl isListening={tempStore.isRunning} />
         </main>
 
-        <div className="p-4 flex flex-1 items-end">
+        <div class="p-4 flex flex-1 items-end">
           <Button
-            className={`w-full ${isRunning ? "bg-red-600 hover:bg-red-700" : ""}`}
-            onClick={toggleIsRunning}
+            class={`w-full ${tempStore.isRunning ? "bg-red-600 hover:bg-red-700" : ""}`}
+            onClick={tempStore.toggleIsRunning}
           >
-            {isRunning ? (
+            {tempStore.isRunning ? (
               <>
-                <Square className="h-4 w-4 mr-2" />
+                <Square class="h-4 w-4 mr-2" />
                 Stop Listening for Hotkey
               </>
             ) : (
               <>
-                <Play className="h-4 w-4 mr-2" />
+                <Play class="h-4 w-4 mr-2" />
                 Start Listening for Hotkey
               </>
             )}

@@ -1,0 +1,5 @@
+{
+  "identifier": "tauri-store",
+  "windows": ["*"],
+  "permissions": ["tauri-store:default", "core:event:default"]
+}

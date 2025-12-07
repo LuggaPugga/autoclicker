@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react"
+import { MousePointer } from "lucide-solid"
+import { createEffect, createSignal, onCleanup } from "solid-js"
+import { useAutoclickerStore } from "@/lib/autoclicker-store"
+import { useTempStore } from "@/lib/temp-store"
 import { Button } from "./ui/button"
 import { Label } from "./ui/label"
-import { MousePointer } from "lucide-react"
-import { useTempStore } from "@/lib/temp-store"
-import { useAutoclickerStore } from "@/lib/autoclicker-store"
 
 type HotkeyType = "left" | "right"
 
 interface HotkeyControlProps {
-  className?: string
+  class?: string
   isListening?: boolean
 }
 
@@ -23,24 +23,15 @@ interface HotkeyButtonProps {
   onRecordClick: (type: HotkeyType) => void
 }
 
-function HotkeyButton({
-  type,
-  hotkey,
-  isRecording,
-  isActive,
-  isRegistered,
-  isListening,
-  recordingText,
-  onRecordClick,
-}: HotkeyButtonProps) {
+function HotkeyButton(props: HotkeyButtonProps) {
   const getButtonStyle = (): string => {
     const baseClasses = "h-7 min-w-[80px] text-xs transition-colors"
 
-    if (isRecording) {
+    if (props.isRecording) {
       return `${baseClasses} bg-cyan-600 hover:bg-cyan-700`
-    } else if (!isRegistered && hotkey && isListening) {
+    } else if (!props.isRegistered && props.hotkey && props.isListening) {
       return `${baseClasses} bg-red-200 text-red-800 border-red-300`
-    } else if (isActive) {
+    } else if (props.isActive) {
       return `${baseClasses} bg-green-600 hover:bg-green-700 text-white`
     }
 
@@ -49,213 +40,200 @@ function HotkeyButton({
 
   return (
     <Button
-      variant={isRecording ? "default" : isActive ? "default" : "outline"}
+      variant={props.isRecording ? "default" : props.isActive ? "default" : "outline"}
       size="sm"
-      onClick={() => onRecordClick(type)}
-      className={getButtonStyle()}
+      onClick={() => props.onRecordClick(props.type)}
+      class={getButtonStyle()}
     >
-      {isRecording ? recordingText : hotkey}
+      {props.isRecording ? props.recordingText : props.hotkey}
     </Button>
   )
 }
 
-export function HotkeyControl({
-  className = "",
-  isListening = false,
-}: HotkeyControlProps): React.ReactElement {
-  const { hotkeyLeft, hotkeyRight, setHotkeyLeft, setHotkeyRight } = useAutoclickerStore()
-  const { hotkeyLeftActive, hotkeyRightActive } = useTempStore()
+export function HotkeyControl(props: HotkeyControlProps) {
+  const autoclickerStore = useAutoclickerStore()
+  const tempStore = useTempStore()
 
-  useEffect(() => {
-    console.log("hotkeyLeftActive", hotkeyLeftActive)
-    console.log("hotkeyRightActive", hotkeyRightActive)
-  }, [hotkeyLeftActive, hotkeyRightActive])
+  const [recording, setRecording] = createSignal<HotkeyType | null>(null)
+  const [currentModifiers, setCurrentModifiers] = createSignal<string[]>([])
+  const [currentKey, setCurrentKey] = createSignal<string>("")
 
-  const [recording, setRecording] = useState<HotkeyType | null>(null)
-  const [currentModifiers, setCurrentModifiers] = useState<string[]>([])
-  const [currentKey, setCurrentKey] = useState<string>("")
-
-  const handleStartRecording = useCallback((type: HotkeyType): void => {
+  const handleStartRecording = (type: HotkeyType): void => {
     setRecording(type)
     setCurrentModifiers([])
     setCurrentKey("")
-  }, [])
+  }
 
-  const handleInputDown = useCallback(
-    (e: KeyboardEvent | MouseEvent): void => {
-      if (!recording) return
+  const handleInputDown = (e: KeyboardEvent | MouseEvent): void => {
+    if (!recording()) return
+    e.preventDefault()
+
+    if (e instanceof KeyboardEvent) {
+      if (e.key === "Escape") {
+        setRecording(null)
+        setCurrentModifiers([])
+        setCurrentKey("")
+        return
+      }
+
+      if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
+        setCurrentModifiers((prev) => {
+          const modifier = e.key === "Control" ? "Ctrl" : e.key
+          return prev.includes(modifier) ? prev : [...prev, modifier]
+        })
+        return
+      }
+
+      setCurrentKey(e.key === " " ? "Space" : e.key)
+    } else if (e instanceof MouseEvent) {
+      if (e.button > 2) {
+        setCurrentKey(`MouseButton${e.button + 1}`)
+      }
+    }
+  }
+
+  const handleInputUp = (e: KeyboardEvent | MouseEvent): void => {
+    if (!recording()) return
+
+    if (e instanceof KeyboardEvent) {
+      if (!["Control", "Alt", "Shift", "Meta", "Escape", " "].includes(e.key) && currentKey()) {
+        const fullKey = [...currentModifiers(), currentKey()].join("+")
+
+        if (recording() === "left") {
+          autoclickerStore.setHotkeyLeft(fullKey)
+        } else if (recording() === "right") {
+          autoclickerStore.setHotkeyRight(fullKey)
+        }
+
+        setRecording(null)
+        setCurrentModifiers([])
+        setCurrentKey("")
+      }
+
+      if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
+        setCurrentModifiers((prev) =>
+          prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key)),
+        )
+      }
+    } else if (e instanceof MouseEvent) {
       e.preventDefault()
+      if (currentKey() && e.button > 2) {
+        const fullKey = currentKey()
 
-      if (e instanceof KeyboardEvent) {
-        if (e.key === "Escape") {
-          setRecording(null)
-          setCurrentModifiers([])
-          setCurrentKey("")
-          return
+        if (recording() === "left") {
+          autoclickerStore.setHotkeyLeft(fullKey)
+        } else if (recording() === "right") {
+          autoclickerStore.setHotkeyRight(fullKey)
         }
 
-        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
-          setCurrentModifiers((prev) => {
-            const modifier = e.key === "Control" ? "Ctrl" : e.key
-            return prev.includes(modifier) ? prev : [...prev, modifier]
-          })
-          return
-        }
-
-        setCurrentKey(e.key === " " ? "Space" : e.key)
-      } else if (e instanceof MouseEvent) {
-        if (e.button > 2) {
-          setCurrentKey(`MouseButton${e.button + 1}`)
-        }
+        setRecording(null)
+        setCurrentModifiers([])
+        setCurrentKey("")
       }
-    },
-    [recording],
-  )
+    }
+  }
 
-  const handleInputUp = useCallback(
-    (e: KeyboardEvent | MouseEvent): void => {
-      if (!recording) return
+  createEffect(() => {
+    const handleContextMenu = (e: Event) => e.preventDefault()
 
-      if (e instanceof KeyboardEvent) {
-        if (!["Control", "Alt", "Shift", "Meta", "Escape", " "].includes(e.key) && currentKey) {
-          const fullKey = [...currentModifiers, currentKey].join("+")
-
-          if (recording === "left") {
-            setHotkeyLeft(fullKey)
-          } else if (recording === "right") {
-            setHotkeyRight(fullKey)
-          }
-
-          setRecording(null)
-          setCurrentModifiers([])
-          setCurrentKey("")
-        }
-
-        if (["Control", "Alt", "Shift", "Meta"].includes(e.key)) {
-          setCurrentModifiers((prev) =>
-            prev.filter((m) => m !== (e.key === "Control" ? "Ctrl" : e.key)),
-          )
-        }
-      } else if (e instanceof MouseEvent) {
-        e.preventDefault()
-        if (currentKey && e.button > 2) {
-          const fullKey = currentKey
-
-          if (recording === "left") {
-            setHotkeyLeft(fullKey)
-          } else if (recording === "right") {
-            setHotkeyRight(fullKey)
-          }
-
-          setRecording(null)
-          setCurrentModifiers([])
-          setCurrentKey("")
-        }
-      }
-    },
-    [recording, currentModifiers, currentKey, setHotkeyLeft, setHotkeyRight],
-  )
-
-  useEffect(() => {
-    if (recording) {
+    if (recording()) {
       window.addEventListener("keydown", handleInputDown as EventListener)
       window.addEventListener("keyup", handleInputUp as EventListener)
       window.addEventListener("mousedown", handleInputDown as EventListener)
       window.addEventListener("mouseup", handleInputUp as EventListener)
-      window.addEventListener("contextmenu", (e) => e.preventDefault())
-    }
+      window.addEventListener("contextmenu", handleContextMenu)
 
-    return () => {
-      window.removeEventListener("keydown", handleInputDown as EventListener)
-      window.removeEventListener("keyup", handleInputUp as EventListener)
-      window.removeEventListener("mousedown", handleInputDown as EventListener)
-      window.removeEventListener("mouseup", handleInputUp as EventListener)
-      window.removeEventListener("contextmenu", (e) => e.preventDefault())
+      onCleanup(() => {
+        window.removeEventListener("keydown", handleInputDown as EventListener)
+        window.removeEventListener("keyup", handleInputUp as EventListener)
+        window.removeEventListener("mousedown", handleInputDown as EventListener)
+        window.removeEventListener("mouseup", handleInputUp as EventListener)
+        window.removeEventListener("contextmenu", handleContextMenu)
+      })
     }
-  }, [recording, handleInputDown, handleInputUp])
+  })
 
   const getRecordingText = (): string => {
-    if (!recording) return ""
+    if (!recording()) return ""
 
-    if (currentKey.startsWith("MouseButton")) {
-      if (currentKey === "MouseButton4") return "Browser Back"
-      if (currentKey === "MouseButton5") return "Browser Forward"
+    const key = currentKey()
+    if (key.startsWith("MouseButton")) {
+      if (key === "MouseButton4") return "Browser Back"
+      if (key === "MouseButton5") return "Browser Forward"
 
-      const buttonNumber = currentKey.replace("MouseButton", "")
+      const buttonNumber = key.replace("MouseButton", "")
       return `Mouse Button ${buttonNumber}`
     }
 
-    if (currentModifiers.length === 0 && !currentKey) {
+    if (currentModifiers().length === 0 && !key) {
       return "Press key..."
     }
 
-    const parts = [...currentModifiers]
-    if (currentKey) parts.push(currentKey)
+    const parts = [...currentModifiers()]
+    if (key) parts.push(key)
     return parts.join("+")
   }
 
   return (
     <div
-      className={`w-full max-w-md rounded-md border border-border/30 bg-transparent p-3 space-y-3 ${className}`}
+      class={`w-full max-w-md rounded-md border border-border/30 bg-transparent p-3 space-y-3 ${props.class || ""}`}
     >
-      <div className="space-y-2">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <MousePointer className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="hotkeys" className="text-sm font-medium">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <MousePointer class="h-4 w-4 text-muted-foreground" />
+            <Label for="hotkeys" class="text-sm font-medium">
               Hotkeys (Global)
             </Label>
           </div>
         </div>
 
-        {/* Left Click Hotkey */}
-        <div className="flex items-center justify-between min-h-[28px]">
-          <div className="flex items-center gap-2">
+        <div class="flex items-center justify-between min-h-[28px]">
+          <div class="flex items-center gap-2">
             <div
-              className={`w-2 h-2 rounded-full transition-colors ${
-                hotkeyLeftActive ? "bg-green-500" : "bg-gray-300"
+              class={`w-2 h-2 rounded-full transition-colors ${
+                tempStore.hotkeyLeftActive ? "bg-green-500" : "bg-gray-300"
               }`}
             />
-            <Label className="text-xs font-medium text-muted-foreground">Left click</Label>
+            <Label class="text-xs font-medium text-muted-foreground">Left click</Label>
           </div>
 
           <HotkeyButton
             type="left"
-            hotkey={hotkeyLeft}
-            isRecording={recording === "left"}
-            isActive={hotkeyLeftActive}
-            isRegistered={!!hotkeyLeft}
-            isListening={isListening}
+            hotkey={autoclickerStore.hotkeyLeft}
+            isRecording={recording() === "left"}
+            isActive={tempStore.hotkeyLeftActive}
+            isRegistered={!!autoclickerStore.hotkeyLeft}
+            isListening={props.isListening ?? false}
             recordingText={getRecordingText()}
             onRecordClick={handleStartRecording}
           />
         </div>
 
-        {/* Right Click Hotkey */}
-        <div className="flex items-center justify-between min-h-[28px]">
-          <div className="flex items-center gap-2">
+        <div class="flex items-center justify-between min-h-[28px]">
+          <div class="flex items-center gap-2">
             <div
-              className={`w-2 h-2 rounded-full transition-colors ${
-                hotkeyRightActive ? "bg-green-500" : "bg-gray-300"
+              class={`w-2 h-2 rounded-full transition-colors ${
+                tempStore.hotkeyRightActive ? "bg-green-500" : "bg-gray-300"
               }`}
             />
-            <Label className="text-xs font-medium text-muted-foreground">Right click</Label>
+            <Label class="text-xs font-medium text-muted-foreground">Right click</Label>
           </div>
 
           <HotkeyButton
             type="right"
-            hotkey={hotkeyRight}
-            isRecording={recording === "right"}
-            isActive={hotkeyRightActive}
-            isRegistered={!!hotkeyRight}
-            isListening={isListening}
+            hotkey={autoclickerStore.hotkeyRight}
+            isRecording={recording() === "right"}
+            isActive={tempStore.hotkeyRightActive}
+            isRegistered={!!autoclickerStore.hotkeyRight}
+            isListening={props.isListening ?? false}
             recordingText={getRecordingText()}
             onRecordClick={handleStartRecording}
           />
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p class="text-xs text-muted-foreground">
         Press a key. ESC to cancel. Hotkeys work globally.
       </p>
     </div>

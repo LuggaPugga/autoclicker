@@ -4,12 +4,12 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use tauri::Emitter;
-use tauri_plugin_zustand::ManagerExt;
+use tauri_store::ManagerExt;
 
 mod hotkey_utils;
-mod zustand_keys;
+mod store_keys;
 
-use crate::zustand_keys::{autoclicker_keys, store, temp_keys};
+use crate::store_keys::{autoclicker_keys, store, temp_keys};
 
 fn get_mouse_button_index(hotkey_str: &str) -> Option<usize> {
     match hotkey_str {
@@ -22,7 +22,7 @@ fn get_mouse_button_index(hotkey_str: &str) -> Option<usize> {
 fn is_mouse_button_pressed(mouse_buttons: &Vec<bool>, hotkey_str: &str) -> bool {
     match get_mouse_button_index(hotkey_str) {
         Some(index) => mouse_buttons.get(index).cloned().unwrap_or(false),
-        None => false,
+        _ => false,
     }
 }
 
@@ -51,19 +51,19 @@ struct HotkeyManager {
 impl HotkeyManager {
     fn new(app_handle: tauri::AppHandle) -> Self {
         let initial_is_running = app_handle
-            .zustand()
+            .store_collection()
             .get::<bool>(store::TEMP, temp_keys::IS_RUNNING)
             .unwrap_or(false);
         let initial_hotkey_left = app_handle
-            .zustand()
+            .store_collection()
             .get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT)
             .unwrap_or_default();
         let initial_hotkey_right = app_handle
-            .zustand()
+            .store_collection()
             .get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT)
             .unwrap_or_default();
         let initial_hold_mode = app_handle
-            .zustand()
+            .store_collection()
             .get::<bool>(store::AUTOCLICKER, autoclicker_keys::HOLD_MODE)
             .unwrap_or(false);
 
@@ -73,11 +73,8 @@ impl HotkeyManager {
         let hold_mode = Arc::new(Mutex::new(initial_hold_mode));
 
         let is_running_clone = Arc::clone(&is_running);
-        let _ = app_handle.zustand().watch(store::TEMP, move |app| {
-            if let Ok(new_val) = app
-                .zustand()
-                .get::<bool>(store::TEMP, temp_keys::IS_RUNNING)
-            {
+        let _ = app_handle.store_collection().watch(store::TEMP, move |app| {
+            if let Ok(new_val) = app.store_collection().get::<bool>(store::TEMP, temp_keys::IS_RUNNING) {
                 *is_running_clone.lock().unwrap() = new_val;
             }
             Ok(())
@@ -86,23 +83,14 @@ impl HotkeyManager {
         let hotkey_left_clone = Arc::clone(&hotkey_left);
         let hotkey_right_clone = Arc::clone(&hotkey_right);
         let hold_mode_clone = Arc::clone(&hold_mode);
-        let _ = app_handle.zustand().watch(store::AUTOCLICKER, move |app| {
-            if let Ok(new_val) = app
-                .zustand()
-                .get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT)
-            {
+        let _ = app_handle.store_collection().watch(store::AUTOCLICKER, move |app| {
+            if let Ok(new_val) = app.store_collection().get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_LEFT) {
                 *hotkey_left_clone.lock().unwrap() = new_val;
             }
-            if let Ok(new_val) = app
-                .zustand()
-                .get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT)
-            {
+            if let Ok(new_val) = app.store_collection().get::<String>(store::AUTOCLICKER, autoclicker_keys::HOTKEY_RIGHT) {
                 *hotkey_right_clone.lock().unwrap() = new_val;
             }
-            if let Ok(new_val) = app
-                .zustand()
-                .get::<bool>(store::AUTOCLICKER, autoclicker_keys::HOLD_MODE)
-            {
+            if let Ok(new_val) = app.store_collection().get::<bool>(store::AUTOCLICKER, autoclicker_keys::HOLD_MODE) {
                 *hold_mode_clone.lock().unwrap() = new_val;
             }
             Ok(())
@@ -125,19 +113,15 @@ impl HotkeyManager {
 
     fn update_hotkey_state(
         &self,
-        zustand_key: &'static str,
+        store_key: &'static str,
         new_active_state: bool,
         emit_event_name: &'static str,
         mode_description: &str,
     ) {
-        if let Err(e) = self
-            .app_handle
-            .zustand()
-            .set(store::TEMP, zustand_key, new_active_state)
-        {
+        if let Err(e) = self.app_handle.store_collection().set(store::TEMP, store_key, new_active_state) {
             eprintln!(
-                "Failed to set {} ({}) in Zustand store: {}",
-                zustand_key, mode_description, e
+                "Failed to set {} ({}) in store: {}",
+                store_key, mode_description, e
             );
         }
         self.app_handle
@@ -160,12 +144,11 @@ impl HotkeyManager {
             } else {
                 hotkey_utils::check_hotkey(&current_keys, &hotkey_left_str)
             };
-            let current_left_active_in_zustand = self
-                .app_handle
-                .zustand()
+            let current_left_active_in_store = self.app_handle
+                .store_collection()
                 .get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE)
                 .unwrap_or(false);
-            if left_hotkey_is_active != current_left_active_in_zustand {
+            if left_hotkey_is_active != current_left_active_in_store {
                 self.update_hotkey_state(
                     temp_keys::HOTKEY_LEFT_ACTIVE,
                     left_hotkey_is_active,
@@ -181,12 +164,11 @@ impl HotkeyManager {
             } else {
                 hotkey_utils::check_hotkey(&current_keys, &hotkey_right_str)
             };
-            let current_right_active_in_zustand = self
-                .app_handle
-                .zustand()
+            let current_right_active_in_store = self.app_handle
+                .store_collection()
                 .get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE)
                 .unwrap_or(false);
-            if right_hotkey_is_active != current_right_active_in_zustand {
+            if right_hotkey_is_active != current_right_active_in_store {
                 self.update_hotkey_state(
                     temp_keys::HOTKEY_RIGHT_ACTIVE,
                     right_hotkey_is_active,
@@ -226,9 +208,8 @@ impl HotkeyManager {
                     }
                 }
                 if triggered {
-                    let current_left_active = self
-                        .app_handle
-                        .zustand()
+                    let current_left_active = self.app_handle
+                        .store_collection()
                         .get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE)
                         .unwrap_or(false);
                     self.update_hotkey_state(
@@ -258,9 +239,8 @@ impl HotkeyManager {
                     }
                 }
                 if triggered {
-                    let current_right_active = self
-                        .app_handle
-                        .zustand()
+                    let current_right_active = self.app_handle
+                        .store_collection()
                         .get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE)
                         .unwrap_or(false);
                     self.update_hotkey_state(
@@ -277,9 +257,8 @@ impl HotkeyManager {
     }
 
     fn reset_hold_mode_hotkeys(&self) {
-        if self
-            .app_handle
-            .zustand()
+        if self.app_handle
+            .store_collection()
             .get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE)
             .unwrap_or(false)
         {
@@ -290,9 +269,8 @@ impl HotkeyManager {
                 "reset (hold)",
             );
         }
-        if self
-            .app_handle
-            .zustand()
+        if self.app_handle
+            .store_collection()
             .get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE)
             .unwrap_or(false)
         {
@@ -354,19 +332,19 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
         let left_active_clone = Arc::clone(&left_active_arc);
         let right_active_clone = Arc::clone(&right_active_arc);
 
-        let _ = app_handle_clicker.zustand().watch(store::TEMP, move |app| {
+        let _ = app_handle_clicker.store_collection().watch(store::TEMP, move |app| {
             let new_is_running = app
-                .zustand()
+                .store_collection()
                 .get::<bool>(store::TEMP, temp_keys::IS_RUNNING)
                 .unwrap_or(false);
 
             let new_left_active = app
-                .zustand()
+                .store_collection()
                 .get::<bool>(store::TEMP, temp_keys::HOTKEY_LEFT_ACTIVE)
                 .unwrap_or(false);
 
             let new_right_active = app
-                .zustand()
+                .store_collection()
                 .get::<bool>(store::TEMP, temp_keys::HOTKEY_RIGHT_ACTIVE)
                 .unwrap_or(false);
 
@@ -384,25 +362,23 @@ fn handle_clicking(app_handle_clicker: tauri::AppHandle) {
 
         let speed_ms_arc = Arc::new(Mutex::new(
             app_handle_clicker
-                .zustand()
+                .store_collection()
                 .get::<f64>(store::AUTOCLICKER, autoclicker_keys::CLICK_SPEED)
                 .unwrap_or(100.0),
         ));
         let speed_ms_clone = Arc::clone(&speed_ms_arc);
 
-        let _ = app_handle_clicker
-            .zustand()
-            .watch(store::AUTOCLICKER, move |app| {
-                let new_speed_ms = app
-                    .zustand()
-                    .get::<f64>(store::AUTOCLICKER, autoclicker_keys::CLICK_SPEED)
-                    .unwrap_or(100.0);
+        let _ = app_handle_clicker.store_collection().watch(store::AUTOCLICKER, move |app| {
+            let new_speed_ms = app
+                .store_collection()
+                .get::<f64>(store::AUTOCLICKER, autoclicker_keys::CLICK_SPEED)
+                .unwrap_or(100.0);
 
-                let mut speed_ms_lock = speed_ms_clone.lock().unwrap();
-                *speed_ms_lock = new_speed_ms;
+            let mut speed_ms_lock = speed_ms_clone.lock().unwrap();
+            *speed_ms_lock = new_speed_ms;
 
-                Ok(())
-            });
+            Ok(())
+        });
 
         let mut enigo = Enigo::new(&Settings::default()).unwrap();
 
@@ -463,7 +439,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_zustand::init())
+        .plugin(tauri_store::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

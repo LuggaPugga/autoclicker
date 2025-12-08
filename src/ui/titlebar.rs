@@ -5,7 +5,6 @@ use gpui_component::{
     button::{Button, ButtonVariants},
     h_flex,
     label::Label,
-    theme::{Theme, ThemeMode},
     ActiveTheme, IconName, TitleBar,
 };
 
@@ -101,28 +100,17 @@ impl Render for CustomTitleBar {
                             .ghost()
                             .compact()
                             .icon(match self.theme_pref {
-                                ThemePreference::System => IconName::Sun,
+                                ThemePreference::System => IconName::Settings,
                                 ThemePreference::Light => IconName::Sun,
                                 ThemePreference::Dark => IconName::Moon,
                             })
                             .on_click(cx.listener(|view, _, window, cx| {
                                 let new_pref = match view.theme_pref {
                                     ThemePreference::System => ThemePreference::Dark,
-                                    ThemePreference::Light => ThemePreference::Dark,
+                                    ThemePreference::Light => ThemePreference::System,
                                     ThemePreference::Dark => ThemePreference::Light,
                                 };
                                 view.theme_pref = new_pref;
-                                match new_pref {
-                                    ThemePreference::System => {
-                                        Theme::sync_system_appearance(Some(window), cx)
-                                    }
-                                    ThemePreference::Light => {
-                                        Theme::change(ThemeMode::Light, Some(window), cx)
-                                    }
-                                    ThemePreference::Dark => {
-                                        Theme::change(ThemeMode::Dark, Some(window), cx)
-                                    }
-                                }
                                 if let Some(ref cb) = view.on_theme_change {
                                     cb(new_pref, window, cx);
                                 }

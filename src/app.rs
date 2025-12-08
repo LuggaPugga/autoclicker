@@ -44,8 +44,19 @@ impl AutoClickerApp {
 
         let state_clone = state.clone();
         let titlebar = cx.new(|_| {
-            CustomTitleBar::new(is_running, theme_pref).on_theme_change(move |pref, _, _| {
+            CustomTitleBar::new(is_running, theme_pref).on_theme_change(move |pref, window, cx| {
                 state_clone.set_theme(pref);
+                match pref {
+                    ThemePreference::System => {
+                        Theme::sync_system_appearance(Some(window), cx);
+                    }
+                    ThemePreference::Light => {
+                        Theme::change(ThemeMode::Light, Some(window), cx);
+                    }
+                    ThemePreference::Dark => {
+                        Theme::change(ThemeMode::Dark, Some(window), cx);
+                    }
+                }
             })
         });
 

@@ -96,8 +96,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts
-          $arch = if (${{ matrix.target }} -match 'aarch64') { 'aarch64' } else { 'x86_64' }
-          Copy-Item "target/${{ matrix.target }}/release/autoclicker.exe" "artifacts/autoclicker-windows-${arch}.exe"
+          $target = "${{ matrix.target }}"
+          $arch = if ($target -match 'aarch64') { 'aarch64' } else { 'x86_64' }
+          Copy-Item "target/$target/release/autoclicker.exe" "artifacts/autoclicker-windows-${arch}.exe"
 
       - uses: actions/upload-artifact@v5
         with:

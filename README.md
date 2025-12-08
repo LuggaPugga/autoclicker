@@ -16,11 +16,11 @@ I created this autoclicker because I couldn't find any open-source autoclickers 
 
 ## Tech Stack
 
-- **Tauri** – Cross-platform desktop app framework
+- **GPUI** – High-performance GPU-accelerated UI framework from Zed
+- **gpui-component** – UI component library for GPUI
 - **Enigo** – Rust library for input simulation
-- **Device_Query** – Detecting input events
-- **Shadcn** – UI components
-- **Tailwind CSS** – Utility-first CSS framework
+- **evdev** – Linux input event handling
+- **device_query** – Input detection for Windows and macOS
 
 ## Compatibility
 

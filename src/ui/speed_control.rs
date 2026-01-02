@@ -46,15 +46,22 @@ impl SpeedControl {
         let input_state =
             cx.new(|cx| InputState::new(window, cx).default_value(&format!("{:.0}", cps_value)));
 
-        cx.subscribe(&slider_state, |this, _, event: &SliderEvent, cx| {
-            let SliderEvent::Change(value) = event;
-            let new_value = value.start();
-            this.click_speed_ms = match this.mode {
-                SpeedMode::Cps => 1000.0 / new_value,
-                SpeedMode::Ms => new_value,
-            };
-            cx.notify();
-        })
+        cx.subscribe_in(
+            &slider_state,
+            window,
+            |this, _, event: &SliderEvent, window, cx| {
+                let SliderEvent::Change(value) = event;
+                let new_value = value.start();
+                this.click_speed_ms = match this.mode {
+                    SpeedMode::Cps => 1000.0 / new_value,
+                    SpeedMode::Ms => new_value,
+                };
+                this.input_state.update(cx, |s, cx| {
+                    s.set_value(&format!("{:.0}", new_value), window, cx);
+                });
+                cx.notify();
+            },
+        )
         .detach();
 
         cx.subscribe_in(&input_state, window, |this, state, event, window, cx| {

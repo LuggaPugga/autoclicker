@@ -4,26 +4,14 @@ use std::sync::{atomic::Ordering, Arc};
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 use device_query::{DeviceQuery, DeviceState, Keycode};
 #[cfg(any(target_os = "windows", target_os = "macos"))]
-use std::{
-    collections::HashSet,
-    str::FromStr,
-    thread,
-    time::Duration,
-};
+use std::{collections::HashSet, str::FromStr, thread, time::Duration};
 
 #[cfg(target_os = "linux")]
 use evdev::{Device, KeyCode};
 #[cfg(target_os = "linux")]
 use nix::fcntl::{fcntl, FcntlArg, OFlag};
 #[cfg(target_os = "linux")]
-use std::{
-    collections::HashSet,
-    fs,
-    os::fd::AsRawFd,
-    str::FromStr,
-    thread,
-    time::Duration,
-};
+use std::{collections::HashSet, fs, os::fd::AsRawFd, str::FromStr, thread, time::Duration};
 
 #[cfg(target_os = "linux")]
 fn key_to_evdev(s: &str) -> Option<KeyCode> {
@@ -517,16 +505,12 @@ fn check_hotkey_device_query(pressed_keys: &HashSet<Keycode>, hotkey_str: &str) 
         }
     }
     if let Ok(lalt) = Keycode::from_str("LAlt") {
-        if modifiers.contains(&lalt)
-            && !check_modifier_device_query(pressed_keys, "LAlt", "RAlt")
-        {
+        if modifiers.contains(&lalt) && !check_modifier_device_query(pressed_keys, "LAlt", "RAlt") {
             return false;
         }
     }
     if let Ok(lwin) = Keycode::from_str("LWin") {
-        if modifiers.contains(&lwin)
-            && !check_modifier_device_query(pressed_keys, "LWin", "RWin")
-        {
+        if modifiers.contains(&lwin) && !check_modifier_device_query(pressed_keys, "LWin", "RWin") {
             return false;
         }
     }
@@ -578,8 +562,8 @@ pub fn start_hotkey_listener(state: Arc<AppState>) {
 
             let left_pressed =
                 !hotkey_left.is_empty() && check_hotkey_device_query(&pressed_keys, &hotkey_left);
-            let right_pressed = !hotkey_right.is_empty()
-                && check_hotkey_device_query(&pressed_keys, &hotkey_right);
+            let right_pressed =
+                !hotkey_right.is_empty() && check_hotkey_device_query(&pressed_keys, &hotkey_right);
 
             if hold_mode {
                 state

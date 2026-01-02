@@ -45,6 +45,7 @@ pub struct RuntimeState {
     pub hotkey_left_active: AtomicBool,
     pub hotkey_right_active: AtomicBool,
     pub hotkeys_available: AtomicBool,
+    pub force_show_warning: AtomicBool,
 }
 
 pub struct AppState {

@@ -1,24 +1,22 @@
 use crate::clicker;
 use crate::hotkey;
 use crate::state::{AppState, ThemePreference};
-use crate::ui::{CustomTitleBar, HotkeyControl, HotkeyType, SpeedControl};
+use crate::ui::{CustomTitleBar, HotkeyControl, HotkeyType, SpeedControl, WaylandWarning};
 use gpui::prelude::FluentBuilder;
 use gpui::*;
 use gpui_component::{
     button::{Button, ButtonVariants},
-    h_flex,
-    label::Label,
     theme::{Theme, ThemeMode},
-    v_flex, ActiveTheme, Icon, IconName,
+    ActiveTheme, IconName,
 };
 use std::sync::{atomic::Ordering, Arc};
 
 pub struct AutoClickerApp {
-    state: Arc<AppState>,
+    pub state: Arc<AppState>,
     titlebar: Entity<CustomTitleBar>,
     speed_control: Entity<SpeedControl>,
     hotkey_control: Entity<HotkeyControl>,
-    show_warning_details: bool,
+    wayland_warning: Entity<WaylandWarning>,
 }
 
 impl AutoClickerApp {
@@ -81,6 +79,8 @@ impl AutoClickerApp {
                 })
         });
 
+        let wayland_warning = cx.new(|_| WaylandWarning::new());
+
         hotkey::start_hotkey_listener(state.clone());
         clicker::start_clicker(state.clone());
 
@@ -89,7 +89,7 @@ impl AutoClickerApp {
             titlebar,
             speed_control,
             hotkey_control,
-            show_warning_details: false,
+            wayland_warning,
         }
     }
 
@@ -123,11 +123,9 @@ impl Render for AutoClickerApp {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
         let is_running = self.state.runtime.is_running.load(Ordering::SeqCst);
-        let hotkeys_available = self.state.runtime.hotkeys_available.load(Ordering::SeqCst);
-
-        let warning_bg = hsla(45.0 / 360.0, 0.93, 0.47, 0.15);
-        let warning_border = hsla(45.0 / 360.0, 0.93, 0.47, 0.4);
-        let warning_text = hsla(45.0 / 360.0, 0.92, 0.40, 1.0);
+        let force_show = self.state.runtime.force_show_warning.load(Ordering::SeqCst);
+        let hotkeys_available =
+            self.state.runtime.hotkeys_available.load(Ordering::SeqCst) && !force_show;
 
         div()
             .size_full()
@@ -136,148 +134,40 @@ impl Render for AutoClickerApp {
             .bg(theme.background)
             .child(self.titlebar.clone())
             .when(!hotkeys_available, |el| {
+                el.child(self.wayland_warning.clone())
+            })
+            .when(hotkeys_available, |el| {
                 el.child(
                     div()
-                        .mx_4()
-                        .mt_4()
-                        .p_3()
-                        .rounded_lg()
-                        .bg(warning_bg)
-                        .border_1()
-                        .border_color(warning_border)
-                        .child(
-                            v_flex()
-                                .gap_2()
-                                .child(
-                                    h_flex()
-                                        .gap_2()
-                                        .items_center()
-                                        .justify_between()
-                                        .child(
-                                            h_flex()
-                                                .gap_2()
-                                                .items_center()
-                                                .child(
-                                                    Icon::new(IconName::TriangleAlert)
-                                                        .size_4()
-                                                        .text_color(warning_text),
-                                                )
-                                                .child(
-                                                    Label::new("Global hotkeys unavailable")
-                                                        .text_sm()
-                                                        .font_weight(FontWeight::MEDIUM)
-                                                        .text_color(warning_text),
-                                                ),
-                                        )
-                                        .child(
-                                            Button::new("toggle-warning-details")
-                                                .ghost()
-                                                .compact()
-                                                .icon(if self.show_warning_details {
-                                                    IconName::ChevronUp
-                                                } else {
-                                                    IconName::ChevronDown
-                                                })
-                                                .on_click(cx.listener(|view, _, _, cx| {
-                                                    view.show_warning_details = !view.show_warning_details;
-                                                    cx.notify();
-                                                })),
-                                        ),
-                                )
-                                .when(self.show_warning_details, |el| {
-                                    el.child(
-                                        v_flex()
-                                            .gap_2()
-                                            .mt_1()
-                                            .child(
-                                                Label::new("Cannot access input devices. Run one of these commands:")
-                                                    .text_xs()
-                                                    .text_color(theme.muted_foreground),
-                                            )
-                                            .child(
-                                                v_flex()
-                                                    .gap_1()
-                                                    .child(
-                                                        Label::new("Option 1 - Temporary (current session):")
-                                                            .text_xs()
-                                                            .font_weight(FontWeight::MEDIUM)
-                                                            .text_color(theme.foreground),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .px_2()
-                                                            .py_1()
-                                                            .rounded(px(4.0))
-                                                            .bg(theme.secondary)
-                                                            .child(
-                                                                Label::new("sudo setfacl -m u:$USER:r /dev/input/event*")
-                                                                    .text_xs()
-                                                                    .text_color(theme.foreground),
-                                                            ),
-                                                    ),
-                                            )
-                                            .child(
-                                                v_flex()
-                                                    .gap_1()
-                                                    .child(
-                                                        Label::new("Option 2 - Permanent (requires logout):")
-                                                            .text_xs()
-                                                            .font_weight(FontWeight::MEDIUM)
-                                                            .text_color(theme.foreground),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .px_2()
-                                                            .py_1()
-                                                            .rounded(px(4.0))
-                                                            .bg(theme.secondary)
-                                                            .child(
-                                                                Label::new("sudo usermod -aG input $USER")
-                                                                    .text_xs()
-                                                                    .text_color(theme.foreground),
-                                                            ),
-                                                    ),
-                                            )
-                                            .child(
-                                                Label::new("Note: Option 2 grants access to ALL apps you run.")
-                                                    .text_xs()
-                                                    .text_color(theme.muted_foreground),
-                                            ),
-                                    )
-                                }),
-                        ),
+                        .flex_1()
+                        .p_4()
+                        .flex()
+                        .flex_col()
+                        .gap_4()
+                        .child(self.speed_control.clone())
+                        .child(self.hotkey_control.clone()),
+                )
+                .child(
+                    div().p_4().child(
+                        Button::new("toggle-running")
+                            .w_full()
+                            .when(is_running, |btn| btn.danger())
+                            .when(!is_running, |btn| btn.primary())
+                            .icon(if is_running {
+                                IconName::CircleX
+                            } else {
+                                IconName::CircleCheck
+                            })
+                            .label(if is_running {
+                                "Stop Listening"
+                            } else {
+                                "Start Listening"
+                            })
+                            .on_click(cx.listener(|view, _, _, cx| {
+                                view.toggle_running(cx);
+                            })),
+                    ),
                 )
             })
-            .child(
-                div()
-                    .flex_1()
-                    .p_4()
-                    .flex()
-                    .flex_col()
-                    .gap_4()
-                    .child(self.speed_control.clone())
-                    .child(self.hotkey_control.clone()),
-            )
-            .child(
-                div().p_4().child(
-                    Button::new("toggle-running")
-                        .w_full()
-                        .when(is_running, |btn| btn.danger())
-                        .when(!is_running, |btn| btn.primary())
-                        .icon(if is_running {
-                            IconName::CircleX
-                        } else {
-                            IconName::CircleCheck
-                        })
-                        .label(if is_running {
-                            "Stop Listening"
-                        } else {
-                            "Start Listening"
-                        })
-                        .on_click(cx.listener(|view, _, _, cx| {
-                            view.toggle_running(cx);
-                        })),
-                ),
-            )
     }
 }

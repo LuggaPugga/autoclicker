@@ -7,6 +7,8 @@ use gpui_component::{
     v_flex, ActiveTheme, Icon, IconName, Sizable,
 };
 
+type HotkeyChangeCallback = Box<dyn Fn(HotkeyType, String, &mut Window, &mut App) + 'static>;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum HotkeyType {
     Left,
@@ -20,7 +22,7 @@ pub struct HotkeyControl {
     hotkey_right_active: bool,
     recording: Option<HotkeyType>,
     recorded_hotkey: Option<String>,
-    on_hotkey_change: Option<Box<dyn Fn(HotkeyType, String, &mut Window, &mut App) + 'static>>,
+    on_hotkey_change: Option<HotkeyChangeCallback>,
     focus_handle: FocusHandle,
 }
 

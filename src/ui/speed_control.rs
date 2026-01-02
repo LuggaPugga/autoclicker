@@ -10,6 +10,9 @@ use gpui_component::{
     v_flex, ActiveTheme, IconName,
 };
 
+type SpeedChangeCallback = Box<dyn Fn(f32, &mut Window, &mut App) + 'static>;
+type HoldModeChangeCallback = Box<dyn Fn(bool, &mut Window, &mut App) + 'static>;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SpeedMode {
     Cps,
@@ -23,8 +26,8 @@ pub struct SpeedControl {
     click_speed_ms: f32,
     last_saved_speed_ms: f32,
     hold_mode: bool,
-    on_speed_change: Option<Box<dyn Fn(f32, &mut Window, &mut App) + 'static>>,
-    on_hold_mode_change: Option<Box<dyn Fn(bool, &mut Window, &mut App) + 'static>>,
+    on_speed_change: Option<SpeedChangeCallback>,
+    on_hold_mode_change: Option<HoldModeChangeCallback>,
 }
 
 impl SpeedControl {
@@ -44,7 +47,7 @@ impl SpeedControl {
                 .step(1.0)
         });
         let input_state =
-            cx.new(|cx| InputState::new(window, cx).default_value(&format!("{:.0}", cps_value)));
+            cx.new(|cx| InputState::new(window, cx).default_value(format!("{:.0}", cps_value)));
 
         cx.subscribe_in(
             &slider_state,
@@ -57,7 +60,7 @@ impl SpeedControl {
                     SpeedMode::Ms => new_value,
                 };
                 this.input_state.update(cx, |s, cx| {
-                    s.set_value(&format!("{:.0}", new_value), window, cx);
+                    s.set_value(format!("{:.0}", new_value), window, cx);
                 });
                 cx.notify();
             },
@@ -131,7 +134,7 @@ impl SpeedControl {
         });
 
         self.input_state.update(cx, |s, cx| {
-            s.set_value(&format!("{:.0}", value), window, cx);
+            s.set_value(format!("{:.0}", value), window, cx);
         });
 
         cx.notify();

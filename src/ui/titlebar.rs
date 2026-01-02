@@ -8,10 +8,12 @@ use gpui_component::{
     ActiveTheme, IconName, TitleBar,
 };
 
+type ThemeChangeCallback = Box<dyn Fn(ThemePreference, &mut Window, &mut App) + 'static>;
+
 pub struct CustomTitleBar {
     is_running: bool,
     theme_pref: ThemePreference,
-    on_theme_change: Option<Box<dyn Fn(ThemePreference, &mut Window, &mut App) + 'static>>,
+    on_theme_change: Option<ThemeChangeCallback>,
 }
 
 impl CustomTitleBar {

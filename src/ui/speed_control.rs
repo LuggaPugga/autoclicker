@@ -124,17 +124,20 @@ impl SpeedControl {
             SpeedMode::Ms => (1.0, 1000.0, self.click_speed_ms.min(1000.0)),
         };
 
-        self.slider_state.update(cx, |s, cx| {
+        self.input_state.update(cx, |s, cx| {
+            s.set_value(format!("{:.0}", value), window, cx);
+        });
+
+        self.slider_state.update(cx, |s, _| {
             *s = SliderState::new()
                 .min(min)
                 .max(max)
                 .step(1.0)
                 .default_value(value);
-            s.set_value(value, window, cx);
         });
 
-        self.input_state.update(cx, |s, cx| {
-            s.set_value(format!("{:.0}", value), window, cx);
+        self.slider_state.update(cx, |s, cx| {
+            s.set_value(value, window, cx);
         });
 
         cx.notify();

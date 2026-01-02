@@ -3,7 +3,7 @@ use enigo::{Button, Direction::Click, Enigo, Mouse, Settings};
 use std::{
     sync::{atomic::Ordering, Arc},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 pub fn start_clicker(state: Arc<AppState>) {
@@ -13,11 +13,15 @@ pub fn start_clicker(state: Arc<AppState>) {
         #[cfg(target_os = "linux")]
         enigo.set_delay(0);
 
+        let mut next_click_time = Instant::now();
+        let mut last_speed_ms = 0.0;
+
         loop {
             let is_running = state.runtime.is_running.load(Ordering::SeqCst);
 
             if !is_running {
                 thread::sleep(Duration::from_millis(200));
+                next_click_time = Instant::now();
                 continue;
             }
 
@@ -25,19 +29,40 @@ pub fn start_clicker(state: Arc<AppState>) {
             let right_active = state.runtime.hotkey_right_active.load(Ordering::SeqCst);
             let speed_ms = state.settings.read().click_speed_ms;
 
-            if left_active {
-                let _ = enigo.button(Button::Left, Click);
+            if (speed_ms - last_speed_ms).abs() > 0.001 {
+                next_click_time = Instant::now();
+                last_speed_ms = speed_ms;
             }
 
-            if right_active {
-                let _ = enigo.button(Button::Right, Click);
+            let now = Instant::now();
+
+            if (left_active || right_active) && now >= next_click_time {
+                if left_active {
+                    let _ = enigo.button(Button::Left, Click);
+                }
+
+                if right_active {
+                    let _ = enigo.button(Button::Right, Click);
+                }
+
+                let interval = Duration::from_secs_f64(speed_ms / 1000.0);
+                next_click_time += interval;
+
+                if next_click_time < now {
+                    next_click_time = now + interval;
+                }
             }
 
             let sleep_time = if left_active || right_active {
-                Duration::from_micros((speed_ms * 1000.0) as u64)
+                if now < next_click_time {
+                    next_click_time.duration_since(now)
+                } else {
+                    Duration::from_micros(1)
+                }
             } else {
                 Duration::from_millis(50)
             };
+
             thread::sleep(sleep_time);
         }
     });

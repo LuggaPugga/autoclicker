@@ -3,11 +3,11 @@ use crate::hotkey;
 use crate::state::{AppState, ThemePreference};
 use crate::ui::{CustomTitleBar, HotkeyControl, HotkeyType, SpeedControl, WaylandWarning};
 use gpui::prelude::FluentBuilder;
-use gpui::*;
+use gpui::{SharedString, *};
 use gpui_component::{
     button::{Button, ButtonVariants},
     theme::{Theme, ThemeMode},
-    ActiveTheme, IconName,
+    ActiveTheme, IconName, ThemeRegistry,
 };
 use std::sync::{atomic::Ordering, Arc};
 
@@ -35,6 +35,7 @@ impl AutoClickerApp {
             ThemePreference::Light => Theme::change(ThemeMode::Light, Some(window), cx),
             ThemePreference::Dark => Theme::change(ThemeMode::Dark, Some(window), cx),
         }
+        apply_custom_theme(cx);
 
         let is_running = state.runtime.is_running.load(Ordering::SeqCst);
         let left_active = state.runtime.hotkey_left_active.load(Ordering::SeqCst);
@@ -55,6 +56,7 @@ impl AutoClickerApp {
                         Theme::change(ThemeMode::Dark, Some(window), cx);
                     }
                 }
+                apply_custom_theme(cx);
             })
         });
 
@@ -169,5 +171,22 @@ impl Render for AutoClickerApp {
                     ),
                 )
             })
+    }
+}
+
+fn apply_custom_theme(cx: &mut App) {
+    let is_dark = Theme::global(cx).mode.is_dark();
+    let theme_name = if is_dark {
+        "Autoclicker Dark"
+    } else {
+        "Autoclicker Light"
+    };
+
+    if let Some(theme) = ThemeRegistry::global(cx)
+        .themes()
+        .get(&SharedString::from(theme_name))
+        .cloned()
+    {
+        Theme::global_mut(cx).apply_config(&theme);
     }
 }

@@ -1,13 +1,8 @@
-name: "build"
+name: "release"
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -104,3 +99,20 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: artifacts/*
+
+  upload-release-assets:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: AButler/upload-release-assets@v3.0
+        with:
+          files: "artifacts/*"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.event.release.tag_name }}

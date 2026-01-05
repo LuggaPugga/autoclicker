@@ -165,6 +165,7 @@ impl HotkeyControl {
             .small()
             .label(display_text)
             .when(is_recording, |btn| btn.primary())
+            .w(px(100.0))
             .when(!is_recording && is_active, |btn| btn.primary())
             .when(!is_recording && !is_active, |btn| btn.outline())
             .on_click(cx.listener(move |view, _, window, cx| {

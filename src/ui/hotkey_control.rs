@@ -7,6 +7,14 @@ use gpui_component::{
     v_flex, ActiveTheme, Icon, IconName, Sizable,
 };
 
+fn format_mouse_button(button: MouseButton) -> Option<String> {
+    match button {
+        MouseButton::Navigate(NavigationDirection::Back) => Some("Mouse4".to_string()),
+        MouseButton::Navigate(NavigationDirection::Forward) => Some("Mouse5".to_string()),
+        _ => None,
+    }
+}
+
 type HotkeyChangeCallback = Box<dyn Fn(HotkeyType, String, &mut Window, &mut App) + 'static>;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -211,26 +219,37 @@ impl Render for HotkeyControl {
                     }
                     cx.notify();
                 }))
-                .on_key_up(cx.listener(
-                    |view, event: &KeyUpEvent, window, cx| {
+                .on_key_up(cx.listener(|view, event: &KeyUpEvent, window, cx| {
+                    if view.recording.is_none() {
+                        return;
+                    }
+
+                    let key_str = event.keystroke.key.as_str();
+                    let is_modifier = matches!(key_str, "control" | "alt" | "shift" | "meta");
+
+                    if !is_modifier && view.recorded_hotkey.is_some() {
+                        view.finish_recording(window, cx);
+                    } else if is_modifier && view.recorded_hotkey.is_some() {
+                        let hotkey = view.recorded_hotkey.as_ref().unwrap();
+                        let is_single_modifier =
+                            matches!(hotkey.as_str(), "Ctrl" | "Alt" | "Shift" | "Meta");
+                        if is_single_modifier {
+                            view.finish_recording(window, cx);
+                        }
+                    }
+                    cx.notify();
+                }))
+                .on_any_mouse_down(cx.listener(
+                    |view, event: &MouseDownEvent, window, cx| {
                         if view.recording.is_none() {
                             return;
                         }
 
-                        let key_str = event.keystroke.key.as_str();
-                        let is_modifier = matches!(key_str, "control" | "alt" | "shift" | "meta");
-
-                        if !is_modifier && view.recorded_hotkey.is_some() {
+                        if let Some(formatted) = format_mouse_button(event.button) {
+                            view.recorded_hotkey = Some(formatted);
                             view.finish_recording(window, cx);
-                        } else if is_modifier && view.recorded_hotkey.is_some() {
-                            let hotkey = view.recorded_hotkey.as_ref().unwrap();
-                            let is_single_modifier =
-                                matches!(hotkey.as_str(), "Ctrl" | "Alt" | "Shift" | "Meta");
-                            if is_single_modifier {
-                                view.finish_recording(window, cx);
-                            }
+                            cx.notify();
                         }
-                        cx.notify();
                     },
                 ))
             })
@@ -301,7 +320,7 @@ impl Render for HotkeyControl {
                             .child(self.render_hotkey_button(HotkeyType::Right, cx)),
                     )
                     .child(
-                        Label::new("Press a key. ESC to cancel. Hotkeys work globally.")
+                        Label::new("Press a key or mouse button (M4/M5). ESC to cancel.")
                             .text_xs()
                             .text_color(theme.muted_foreground),
                     ),
